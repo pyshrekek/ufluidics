@@ -167,7 +167,31 @@ The 9-72 V input range also delivers the voltage margin argued for below, withou
 
 Traco **TSR 1-2450** (6.5-36 V, 1 A) is an equivalent alternative, with less input margin.
 
-Go discrete only if you later need more than 1 A, want an all-SMD assembly, or reach volumes where the part cost matters. The TPS54360 design is documented below for that case.
+#### Middle option: LM2675MX-5.0
+
+If SMD assembly or part cost matters more than component count, the **LM2675MX-5.0/NOPB** sits between the module and a full discrete design: 6.5-40 V in, 1 A, 260 kHz fixed, internally compensated, and the fixed-5.0 V version needs no feedback divider.
+
+| | R-78HB5.0-1.0 | LM2675MX-5.0 | TPS54360 |
+|---|---|---|---|
+| Vin max | **72 V** | 40 V | 60 V |
+| Output | 1 A | 1 A | 3.5 A |
+| External parts | **1** | ~6 | ~16 |
+| Catch diode | none | required | required |
+| Compensation | none | internal | external RC |
+| Feedback divider | none | none (fixed) | 2 resistors |
+| Package | SIP-3 through-hole | SOIC-8 | SOIC-8 |
+| Cost | ~$10 | ~$3 | ~$4 |
+
+External parts are Cin, Cout, inductor, catch diode (1 A 40 V Schottky) and a ~10 nF bootstrap capacitor. That removes the two worst parts of the TPS54360 design - the compensation network and the feedback divider.
+
+Two caveats:
+
+- **40 V is the stated minimum, not comfortable margin.** With the input TVS clamping around 26-29 V there is roughly 11 V of headroom on a rail shared with five inductive loads. This is the same argument that ruled out TPS54331 and MP1584, and the LM2675 only just clears it.
+- **260 kHz is slow, so the inductor is bulky.** Around 33 uH keeps continuous conduction at the 250 mA load with 24 V in; the datasheet nomograph suggests more for the full 1 A rating.
+
+It also still has a catch diode, so the high-di/dt loop still needs a tight layout. Fewer support components does not remove that risk - only the module does.
+
+Go full discrete (TPS54360, documented below) only if you later need more than 1 A or reach volumes where part cost dominates.
 
 ### Discrete alternative: why 40 V minimum
 
