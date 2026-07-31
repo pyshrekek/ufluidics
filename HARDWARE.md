@@ -133,7 +133,7 @@ The cost is two failure modes sockets introduce - a module can be inserted backw
 | Input TVS | SMBJ26A | Clamps inductive kickback from motor leads |
 | Bulk cap | 470-1000 uF, 35 V, low ESR | Plus the per-driver 100 uF above |
 | 24 V -> 5 V | **TPS54360** (60 V, 3.5 A). Alternatives: MP4560 (55 V, 3 A) cheaper, LM2596 (40 V) if you want through-hole | 40 V minimum rating - see below |
-| 5 V -> 3.3 V | **TLV1117-33 or NCP1117-3.3, SOT-223**. Not a SOT-23 part | 800 mA - 1 A. Thermals decide the package |
+| 5 V -> 3.3 V | **NCP1117-3.3 or TLV1117-33**, SOT-223 with a copper pour, or DPAK | Must shed 0.37 W continuous - see the thermal table |
 | 3.3 V bulk | 22 uF + 100 nF at the module | Espressif minimum is 10 uF; WiFi TX is bursty |
 
 ### Power budget
@@ -156,19 +156,24 @@ Set the switching frequency around 400-600 kHz. Higher shrinks the inductor but 
 
 For a first spin, a soldered-down pre-made 24 V -> 5 V buck module is a legitimate way to avoid designing a switcher at all.
 
-### LDO: the package is the decision, not the part number
+### LDO: sized by dissipation, not by part number
 
-At 215 mA average from 5 V the LDO dissipates 0.37 W, peaking near 1.0 W during WiFi transmit. That rules out the small packages people usually reach for:
+At 215 mA average from 5 V the LDO burns **0.37 W**. That average is what sets junction temperature - the ESP32's WiFi bursts are milliseconds against a package thermal time constant of seconds, so the junction cannot follow them and peak current is not the sizing case.
 
-| Package | Theta JA | Average rise | Peak rise |
+Thermal resistance depends on the package **and** the copper under it:
+
+| Package | Theta JA | Rise at 0.37 W | Junction at 25 C ambient |
 |---|---|---|---|
-| SOT-23-5 (AP2112K, RT9013...) | ~250 C/W | **+91 C** | **+253 C** |
-| **SOT-223** (TLV1117, NCP1117, AMS1117) | ~60 C/W | +22 C | +61 C |
-| DPAK | ~40 C/W | +15 C | +40 C |
+| SOT-23-5 | ~250 C/W | +93 C | **118 C** - too hot, and worse inside an enclosure |
+| SOT-223, good pour | ~53 C/W | +20 C | 45 C |
+| SOT-223, minimal copper | ~150 C/W | +56 C | 81 C - works, runs warm |
+| DPAK | ~40 C/W | +15 C | 40 C |
 
-**Use SOT-223 with a copper pour.** A SOT-23-5 LDO is the default choice for 3.3 V and it does not work here.
+So the requirement is: **a part rated 600 mA or more, in a package that sheds 0.4 W on the copper you actually give it.** SOT-223 with a pour or DPAK both satisfy that.
 
-Prefer **TLV1117-33** or **NCP1117-3.3** over a generic AMS1117: the AMS1117 datasheet calls for a 22 uF tantalum output capacitor and can be marginal on pure ceramic. Check the output capacitor ESR requirement of whichever part you pick.
+**NCP1117-3.3** or **TLV1117-33** are the picks - both are available in SOT-223 and DPAK, so the package is a layout choice rather than a different part. AP2112K and RT9013 are ruled out not because SOT-23-5 is inherently wrong but because that is the only package they come in.
+
+Prefer either over a generic AMS1117: the AMS1117 datasheet calls for a 22 uF tantalum output capacitor and can be marginal on pure ceramic. Check the output capacitor ESR requirement of whichever part you choose.
 
 ### Why not go 24 V straight to 3.3 V
 
