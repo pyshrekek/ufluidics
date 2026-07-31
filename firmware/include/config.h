@@ -131,16 +131,19 @@
 // ---------------------------------------------------------------------------
 // Pin map - ESP32-S3-WROOM-1
 //
-// Deliberately avoids GPIO33-37, so this map works on BOTH the N16 and the
-// octal-PSRAM N16R8 parts. R8 consumes GPIO33-37 for the SPI0/1 data lines,
-// and a map that used them would fail on the wrong part with no obvious
-// symptom beyond pumps that never move.
+// The module exposes GPIO0-21 and GPIO35-48 only - 36 pins. There is no
+// GPIO22-34 on the package at all; the pad numbering jumps from IO21 to IO35.
+// Check any pin against that before assigning it.
 //
-// Also avoided: GPIO19/20 (native USB D-/D+), GPIO26-32 (SPI flash),
-//               GPIO0/3/45/46 (strapping).
+// Reserved: GPIO19/20 (native USB D-/D+), GPIO0/3/45/46 (strapping).
+// That leaves 30 comfortable pins on N16.
 //
-// Budget: 26 pins used of 27 available on R8, of 32 on N16.
-// GPIO48 is left free because DevKitC-1 boards wire it to an onboard RGB LED.
+// Avoids GPIO35-37 for everything except the optional SPI display, so the map
+// works on BOTH N16 and the octal-PSRAM N16R8. R8 consumes 35-37 for the
+// SPI0/1 data lines, and a map that used them would fail on the wrong part
+// with no symptom beyond pumps that never move.
+//
+// Budget: 26 pins used. 4 spare on N16 (35, 36, 37, 48), 1 on R8 (48).
 // ---------------------------------------------------------------------------
 
 // STEP pins must stay contiguous and all above GPIO32, so the ISR sets and
@@ -165,17 +168,25 @@
 
 // SPI display header, N16 ONLY.
 //
-// These sit on the pins octal PSRAM claims, so an R8 part has no room for
-// them - use the I2C display header instead. Building with PSRAM enabled and
-// SPI display pins defined would silently fight the memory bus, so it is a
-// hard error rather than a comment.
+// GPIO35/36/37 are the only spare pins on an N16 part once everything above is
+// placed, and octal PSRAM claims exactly those - so on an R8 module there is no
+// room and the I2C display header is the option. Compiled out rather than left
+// as a comment, because pins that fight the memory bus fail at run time.
+//
+// Only four GPIO, not five: display RESET ties to the board reset net so the
+// panel comes up with the MCU. That is standard practice and it is what makes
+// the header fit at all.
+//
+// NOTE: GPIO33 and GPIO34 do NOT exist on the WROOM-1 module. It exposes
+// GPIO0-21 and GPIO35-48 only - the pad numbering jumps straight from IO21 to
+// IO35. Anything in 22-34 is either absent or bonded to the internal flash.
 #ifndef BOARD_HAS_PSRAM
   #define TFT_SPI_AVAILABLE 1
-  #define TFT_SCK_PIN     33
-  #define TFT_MOSI_PIN    34
-  #define TFT_CS_PIN      35
-  #define TFT_DC_PIN      36
-  #define TFT_RST_PIN     37
+  #define TFT_SCK_PIN     35
+  #define TFT_MOSI_PIN    36
+  #define TFT_CS_PIN      37
+  #define TFT_DC_PIN      48   // free; DevKitC-1 wires it to an RGB LED
+                               // RST -> board reset net, no GPIO
 #else
   #define TFT_SPI_AVAILABLE 0
 #endif
@@ -250,13 +261,35 @@ static_assert(MIN_IN1_SPS > MIN_SPEED_SPS,
 // The single-register ISR write depends on every STEP pin living above GPIO32.
 static_assert(STEP_GPIO_BASE >= 32, "STEP pins must be in the GPIO_OUT1 bank");
 
-// Octal PSRAM (the R8 parts) claims GPIO33-37 for the SPI0/1 data lines. A pin
+// The WROOM-1 module exposes GPIO0-21 and GPIO35-48 only. GPIO22-34 are not on
+// the package - 22-25 do not exist on the die and 26-32 are bonded to the
+// internal flash. Assigning one produces a schematic with a net going nowhere,
+// which is invisible until the board is built.
+#define PIN_EXISTS(p)  (((p) <= 21) || ((p) >= 35 && (p) <= 48))
+
+static_assert(PIN_EXISTS(EN_PIN)          && PIN_EXISTS(TMC_UART_A_PIN)  &&
+              PIN_EXISTS(TMC_UART_B_PIN)  && PIN_EXISTS(POT_A_PIN)       &&
+              PIN_EXISTS(POT_B_PIN)       && PIN_EXISTS(RUN_SWITCH_PIN)  &&
+              PIN_EXISTS(ESTOP_SENSE_PIN) && PIN_EXISTS(LED_RUN_PIN)     &&
+              PIN_EXISTS(LED_FAULT_PIN)   && PIN_EXISTS(I2C_SDA_PIN)     &&
+              PIN_EXISTS(I2C_SCL_PIN),
+              "pin is not exposed on the ESP32-S3-WROOM-1 module");
+static_assert(PIN_EXISTS(STEP_GPIO_BASE) &&
+              PIN_EXISTS(STEP_GPIO_BASE + N_PUMPS - 1),
+              "STEP range is not exposed on the ESP32-S3-WROOM-1 module");
+#if TFT_SPI_AVAILABLE
+static_assert(PIN_EXISTS(TFT_SCK_PIN) && PIN_EXISTS(TFT_MOSI_PIN) &&
+              PIN_EXISTS(TFT_CS_PIN)  && PIN_EXISTS(TFT_DC_PIN),
+              "SPI display pin is not exposed on the module");
+#endif
+
+// Octal PSRAM (the R8 parts) claims GPIO35-37 for the SPI0/1 data lines. A pin
 // map that used them would build fine and then fight the memory bus at run
 // time, so catch it here instead. Everything except the optional SPI display
 // header stays clear of that range, which is what lets one map serve N16 and
 // N16R8 alike.
 #ifdef BOARD_HAS_PSRAM
-  #define PIN_CLEARS_PSRAM(p) ((p) < 33 || (p) > 37)
+  #define PIN_CLEARS_PSRAM(p) ((p) < 35 || (p) > 37)
   static_assert(PIN_CLEARS_PSRAM(EN_PIN)          &&
                 PIN_CLEARS_PSRAM(TMC_UART_A_PIN)  &&
                 PIN_CLEARS_PSRAM(TMC_UART_B_PIN)  &&
@@ -266,10 +299,10 @@ static_assert(STEP_GPIO_BASE >= 32, "STEP pins must be in the GPIO_OUT1 bank");
                 PIN_CLEARS_PSRAM(LED_FAULT_PIN)   &&
                 PIN_CLEARS_PSRAM(I2C_SDA_PIN)     &&
                 PIN_CLEARS_PSRAM(I2C_SCL_PIN),
-                "pin collides with octal PSRAM (GPIO33-37) on an R8 module");
+                "pin collides with octal PSRAM (GPIO35-37) on an R8 module");
   static_assert(PIN_CLEARS_PSRAM(STEP_GPIO_BASE) &&
                 PIN_CLEARS_PSRAM(STEP_GPIO_BASE + N_PUMPS - 1),
-                "STEP range collides with octal PSRAM (GPIO33-37)");
+                "STEP range collides with octal PSRAM (GPIO35-37)");
 #endif
 
 static_assert(POT_RAW_MIN > POT_DEADBAND,

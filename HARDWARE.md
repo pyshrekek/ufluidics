@@ -35,7 +35,7 @@ So: **use a timer DDS, not FastAccelStepper**, and the per-variant channel table
 
 | | ESP32-WROOM-32E | **ESP32-S3-WROOM-1-N16** | RP2350B |
 |---|---|---|---|
-| Usable GPIO | 19 out + 4 in-only | **~34** | 48 |
+| Usable GPIO | 19 out + 4 in-only | **30** | 48 |
 | I/O expander needed | **Yes** | No | No |
 | ADC usable with WiFi | ADC1 only, 6 ch | **ADC1, 10 ch** | All, no conflict |
 | Native USB | No - needs CP2102N | **Yes** | Yes |
@@ -47,20 +47,20 @@ So: **use a timer DDS, not FastAccelStepper**, and the per-variant channel table
 
 It wins on three concrete things:
 
-- **~34 usable GPIO deletes the MCP23017.** The pin budget that forced an expander was a classic-ESP32 problem, not an ESP32 problem.
+- **30 usable GPIO deletes the MCP23017.** The module exposes GPIO0-21 and GPIO35-48 (36 pins); reserving GPIO19/20 for USB and GPIO0/3/45/46 as strapping leaves 30. The pin budget that forced an expander was a classic-ESP32 problem, not an ESP32 problem.
 - **Native USB deletes the CP2102N**, its crystal and its support parts. Programming and console come straight off USB-C, and DFU becomes available.
 - **ADC1 has 10 channels on GPIO1-10 and works with WiFi up.** Classic ESP32 gives you 6, overlapping the input-only pins the endstops want. That collision was the other half of the pin problem.
 
-**N16 is preferred, but the firmware pin map works on either.** Octal PSRAM (the R8 parts) consumes GPIO33-37 for the SPI0/1 data lines, so `firmware/include/config.h` keeps everything except the optional SPI display header clear of that range. A `static_assert` guarded by `BOARD_HAS_PSRAM` fails the build if a pin ever strays into it, rather than letting the board fight its own memory bus at run time.
+**N16 is preferred, but the firmware pin map works on either.** Octal PSRAM (the R8 parts) consumes GPIO35-37 for the SPI0/1 data lines, so `firmware/include/config.h` keeps everything except the optional SPI display header clear of that range. A `static_assert` guarded by `BOARD_HAS_PSRAM` fails the build if a pin ever strays into it, rather than letting the board fight its own memory bus at run time.
 
 What you give up on R8:
 
 | | N16 | N16R8 |
 |---|---|---|
-| Usable GPIO | 32 | 27 |
+| Usable GPIO | 30 | 27 |
 | Pins used by this design | 26 | 26 |
-| Spare | 6 | 1 |
-| SPI display header (GPIO33-37) | Available | **Not available - use I2C** |
+| Spare | 4 (35, 36, 37, 48) | 1 (48) |
+| SPI display header (GPIO35-37) | Available | **Not available - use I2C** |
 
 The 8 MB of PSRAM buys nothing here. A single-page web UI is a few hundred KB, the build currently uses 5.9% of SRAM, and an ILI9341 driven by Adafruit_GFX draws directly rather than from a framebuffer. So R8 costs five GPIO and the SPI display option in exchange for memory this design does not use - but if it is what you can get, it works.
 
@@ -183,7 +183,7 @@ Fit **both headers** on the board. An I2C display header costs four pins that ar
 | Header | Pins | Availability |
 |---|---|---|
 | I2C display | 3.3 V, GND, SDA, SCL (4.7k pullups on board) | Both N16 and N16R8 |
-| SPI display | 3.3 V, GND, SCK, MOSI, CS, DC, RST, BL | **N16 only** - sits on GPIO33-37 |
+| SPI display | 3.3 V, GND, SCK, MOSI, CS, DC, BL. RST ties to the board reset net | **N16 only** - sits on GPIO35-37 |
 
 Drive both at **3.3 V logic**. Most OLED modules are fine; check any ILI9341 module, as some carry 5 V level shifters and some do not.
 
@@ -221,6 +221,8 @@ Classic ESP32-WROOM has 19 output-capable GPIO plus 4 input-only (GPIO6-11 are f
 That is why the classic part needs an **MCP23017 I2C expander** (~$1.50) to absorb the endstops, switches and LEDs. It works fine; it is simply a problem the S3 does not have.
 
 ## ESP32-S3 gotchas that must be designed around
+
+**GPIO22-34 do not exist on the WROOM-1 module.** The pad numbering jumps straight from IO21 to IO35: 22-25 are absent from the die, 26-32 are bonded to the internal flash, and 33/34 are not brought out to the module at all. Assigning one produces a schematic net that goes nowhere and a board that is wrong in a way no DRC will catch. `config.h` carries a `PIN_EXISTS()` `static_assert` over every pin for this reason.
 
 **ADC2 does not work while WiFi is active.** Silicon limitation on every ESP32 variant, not something firmware can route around - the pots read garbage the moment the radio comes up. On the S3, put them on **ADC1: GPIO1-10**. Ten channels, all normal bidirectional pins.
 

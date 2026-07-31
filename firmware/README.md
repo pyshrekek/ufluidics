@@ -43,7 +43,9 @@ At peak the system runs 181 steps/s - about 111 timer ticks per step. FastAccelS
 
 **STEP pins must stay above GPIO32 and contiguous.** The ISR writes `GPIO_OUT1_W1TS`/`W1TC` once for all five pumps. A `static_assert` enforces the bank; the contiguity is by convention.
 
-**The pin map avoids GPIO33-37 so it serves both N16 and N16R8.** Octal PSRAM claims that range for the SPI0/1 data lines. Only the optional SPI display header uses it, and that header is compiled out when `BOARD_HAS_PSRAM` is defined. A guarded `static_assert` fails the build if any other pin strays in there - verified by deliberately breaking it, not just written and hoped for.
+**GPIO22-34 do not exist on the WROOM-1 module** - the pads jump from IO21 to IO35. A `PIN_EXISTS()` `static_assert` covers every assigned pin, because a non-existent pin yields a schematic net going nowhere rather than any build or DRC error.
+
+**The pin map avoids GPIO35-37 so it serves both N16 and N16R8.** Octal PSRAM claims that range for the SPI0/1 data lines. Only the optional SPI display header uses it, and that header is compiled out when `BOARD_HAS_PSRAM` is defined. A guarded `static_assert` fails the build if any other pin strays in there - verified by deliberately breaking it, not just written and hoped for.
 
 Build for an R8 part with:
 
