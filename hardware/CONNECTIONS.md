@@ -35,8 +35,8 @@ Reference designators used below:
 | 7 | GPIO7 | DIR OUT2 | U5 TMC2209 DIR | out |
 | 8 | GPIO15 | DIR OUT3 | U6 TMC2209 DIR | out |
 | 9 | GPIO16 | DRV_EN (all 5) | U2-U6 TMC2209 EN, via E-stop | out |
-| 10 | GPIO17 | TMC_UART_A | U2-U5 PDN_UART, 1k series each | bidir |
-| 11 | GPIO18 | TMC_UART_B | U6 PDN_UART, 1k series | bidir |
+| 10 | GPIO17 | TMC_UART_A | U2-U5 PDN_UART pin 4 (1k on module) | bidir |
+| 11 | GPIO18 | TMC_UART_B | U6 PDN_UART pin 4 (1k on module) | bidir |
 | 12 | GPIO8 | ENDSTOP IN1 | J-ES1 pin 2 | in, pullup |
 | 13 | GPIO19 | USB_D- | USB-C D- (CC 5k1 each) | bidir |
 | 14 | GPIO20 | USB_D+ | USB-C D+ | bidir |
