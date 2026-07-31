@@ -88,13 +88,15 @@ Identical wiring except for STEP, DIR and the UART address straps.
 | GND | Ground plane | |
 | VIO | +3.3 V | Logic reference. Must be 3V3, not 5 V |
 | EN | DRV_EN net (U1 GPIO16, through the E-stop contact) | Active LOW |
-| VREF | No-Connect | Current is set over UART; there is no trimpot |
+| VREF | **Depends on part - see below** | Module: leave the header pin NC, the onboard trimpot drives it. Bare IC: it is an analog input and must not float |
 | DIAG | No-Connect (or to a spare pin for StallGuard) | |
 | INDEX | No-Connect | |
 | SPREAD | GND | StealthChop; overridden over UART anyway |
 | CLK | GND | Selects the internal oscillator |
 | 1A, 1B | J-Mx pins 1, 2 | Motor coil A |
 | 2A, 2B | J-Mx pins 3, 4 | Motor coil B |
+
+**VREF, specifically.** In UART mode the run current comes from the `IRUN`/`IHOLD` registers, not from VREF - which is why the trimpot disappears from the build procedure. That does not mean the pin can float. On a SilentStepStick-style module the onboard trimpot already forms a divider from VIO, so the header pin is genuinely a No-Connect. On a **bare TMC2209** you must drive VREF yourself; tie it to VIO and let `IRUN` scale from there. A floating analog input on a bare IC gives unpredictable current limiting.
 
 ### Per-driver
 
@@ -227,3 +229,79 @@ The E-stop must break DRV_EN in hardware. GPIO14 exists only so the display and 
 Both CC pins need their own 5.1k. A single shared resistor is a common error that makes the port work with some hosts and not others.
 
 No USB-serial chip: the ESP32-S3 enumerates natively, which is what removes the CP2102N from the BOM.
+
+---
+
+## Hierarchical sheet layout (KiCad)
+
+Five identical drivers is exactly what hierarchical sheets are for: draw the driver **once**, instantiate the same `.sch` file five times. KiCad annotates each instance separately, so U2-U6 fall out automatically.
+
+### What crosses the hierarchy, and what does not
+
+| Signal | How | Why |
+|---|---|---|
+| +24V, +3V3, GND | **Power symbols** (global) | Never route power through sheet pins; it clutters the parent for no information |
+| DRV_EN | **Global label** | One net to all five drivers. A hierarchical pin would add five parent wires that all say the same thing |
+| STEP, DIR | **Hierarchical pin** | Unique per instance |
+| UART | **Hierarchical pin** | Bus A for U2-U5, bus B for U6 |
+| MS1, MS2 | **Hierarchical pin** | The address straps - see below |
+| Motor 1A/1B/2A/2B | **Stay inside the sheet** | Put the JST connector in the sheet too, so each instance gets its own and nothing crosses |
+
+So the sheet symbol on the parent has just **five pins**: STEP, DIR, UART, MS1, MS2.
+
+### The address straps are the catch
+
+A TMC2209 takes its UART address from MS1/MS2, and each of the four drivers on bus A needs a *different* address. You cannot hardwire that inside a sheet you are reusing - all five instances would come out identical, every driver on bus A would answer to address 0, and the bus would collide.
+
+Fix: expose **MS1 and MS2 as hierarchical pins** and strap them on the parent sheet, per instance. A reused sheet may connect its pins to different nets in each instance - that is precisely what hierarchy is for.
+
+| Instance | Pump | MS2 | MS1 | Address | Bus |
+|---|---|---|---|---|---|
+| Sheet 1 | IN1 | GND | GND | 0 | A |
+| Sheet 2 | IN2 | GND | +3V3 | 1 | A |
+| Sheet 3 | OUT1 | +3V3 | GND | 2 | A |
+| Sheet 4 | OUT2 | +3V3 | +3V3 | 3 | A |
+| Sheet 5 | OUT3 | GND | GND | 0 | **B** |
+
+MS1/MS2 have internal pulldowns, so a GND strap could be left off - do not. An explicit tie is one symbol and it makes the address readable straight off the schematic.
+
+### Inside the driver sheet
+
+```
+  +24V ──┬──────────────── VM
+         │
+    C1 100uF/35V          GND ─── GND
+    C2 100nF                     (both caps close to VM)
+         │
+        GND
+
+  +3V3 ──┬──────────────── VIO        3.3 V, not 5 V
+    C3 100nF
+         │
+        GND
+
+  DRV_EN ───────────────── EN         global label, active LOW
+  STEP ─────────────────── STEP       hier pin
+  DIR ──────────────────── DIR        hier pin
+  UART ────[ R 1k ]─────── PDN_UART   hier pin, own resistor per driver
+  MS1 ──────────────────── MS1        hier pin, strapped on parent
+  MS2 ──────────────────── MS2        hier pin, strapped on parent
+
+  GND ──────────────────── SPREAD     StealthChop
+  GND ──────────────────── CLK        internal oscillator
+                           VREF ───── see the VREF note above
+                           DIAG ───── NC (or a hier pin for StallGuard)
+                           INDEX ──── NC
+
+                     1A,1B,2A,2B ──── J-Mx, JST-XH 4-pin, inside the sheet
+```
+
+**Physical pin order varies by vendor.** Watterott SilentStepStick, BigTreeTech and FYSETC modules are all "A4988 footprint" but do not agree pin-for-pin. Wire by signal name against the datasheet for the exact part you are buying, not against a generic StepStick pinout.
+
+### Mechanics
+
+1. Draw the driver sheet once and save it, e.g. `tmc2209.kicad_sch`.
+2. On the root sheet, place a sheet symbol and point it at that **existing file** four more times. KiCad reuses the file rather than copying it - editing one edits all five, which is the point.
+3. Annotate. Each instance gets its own designators; the sheet path disambiguates them.
+4. Strap MS1/MS2 per instance on the root sheet, per the table above.
+5. ERC will flag any sheet pin left unconnected on any instance - useful, since a missed strap is otherwise silent until the UART does not answer.
