@@ -307,90 +307,47 @@ The E-stop must break DRV_EN in hardware. GPIO14 exists only so the display and 
 
 ## USB-C (J2)
 
-| Pin | Net |
-|---|---|
-| VBUS | +5V (through a Schottky if the 24 V supply may also be present) |
-| GND | Ground |
-| D+ | U1 GPIO20 |
-| D- | U1 GPIO19 |
-| CC1, CC2 | 5.1k pulldown each |
+A 16-pin USB 2.0 receptacle is enough - the SBU and SS pairs of a 24-pin part go unused. Wired as a **device** (UFP), data only, no power delivery negotiation.
 
-Both CC pins need their own 5.1k. A single shared resistor is a common error that makes the port work with some hosts and not others.
-
-No USB-serial chip: the ESP32-S3 enumerates natively, which is what removes the CP2102N from the BOM.
-
----
-
-## Hierarchical sheet layout (KiCad)
-
-Five identical drivers is exactly what hierarchical sheets are for: draw the driver **once**, instantiate the same `.sch` file five times. KiCad annotates each instance separately, so U2-U6 fall out automatically.
-
-### What crosses the hierarchy, and what does not
-
-| Signal | How | Why |
+| Receptacle pin(s) | Net | Notes |
 |---|---|---|
-| +24V, +3V3, GND | **Power symbols** (global) | Never route power through sheet pins; it clutters the parent for no information |
-| DRV_EN | **Global label** | One net to all five drivers. A hierarchical pin would add five parent wires that all say the same thing |
-| STEP, DIR | **Hierarchical pin** | Unique per instance |
-| UART | **Hierarchical pin** | Bus A for U2-U5, bus B for U6 |
-| MS1, MS2 | **Hierarchical pin** | The address straps - see below |
-| Motor 1A/1B/2A/2B | **Stay inside the sheet** | Put the JST connector in the sheet too, so each instance gets its own and nothing crosses |
+| A1, B1, A12, B12 | GND | All four to the plane |
+| A4, B4, A9, B9 | VBUS | All four tied together |
+| **A5** | **CC1** | **5.1k to GND - its own resistor** |
+| **B5** | **CC2** | **5.1k to GND - its own resistor** |
+| A6, B6 | D+ | Tie together, then to U1 GPIO20 |
+| A7, B7 | D- | Tie together, then to U1 GPIO19 |
+| A8, B8 | SBU1, SBU2 | No-Connect for USB 2.0 |
 
-So the sheet symbol on the parent has just **five pins**: STEP, DIR, UART, MS1, MS2.
+### The CC resistors are the classic mistake
 
-### The address straps are the catch
+**Each CC pin needs its own 5.1k pulldown.** One shared resistor across both is the single most common USB-C error, and it produces a port that works with some cables and hosts and not others - which reads as a flaky cable rather than a board fault.
 
-A TMC2209 takes its UART address from MS1/MS2, and each of the four drivers on bus A needs a *different* address. You cannot hardwire that inside a sheet you are reusing - all five instances would come out identical, every driver on bus A would answer to address 0, and the bus would collide.
+The host uses CC1 and CC2 to detect plug orientation. Tie them together and orientation detection fails; many hosts then refuse to enumerate or never turn on VBUS. Two separate 5.1k (Rd) advertises "device, USB default current" and is correct for anything drawing 500 mA or less.
 
-Fix: expose **MS1 and MS2 as hierarchical pins** and strap them on the parent sheet, per instance. A reused sheet may connect its pins to different nets in each instance - that is precisely what hierarchy is for.
+### D+ and D- tie together, deliberately
 
-| Instance | Pump | MS2 | MS1 | Address | Bus |
-|---|---|---|---|---|---|
-| Sheet 1 | IN1 | GND | GND | 0 | A |
-| Sheet 2 | IN2 | GND | +3V3 | 1 | A |
-| Sheet 3 | OUT1 | +3V3 | GND | 2 | A |
-| Sheet 4 | OUT2 | +3V3 | +3V3 | 3 | A |
-| Sheet 5 | OUT3 | GND | GND | 0 | **B** |
+A USB-C receptacle carries the D pair twice, once per orientation. A USB 2.0 device shorts A6 to B6 and A7 to B7 so the link works either way up. That is correct, not a shortcut.
 
-MS1/MS2 have internal pulldowns, so a GND strap could be left off - do not. An explicit tie is one symbol and it makes the address readable straight off the schematic.
+Route them to U1 GPIO20 (D+) and GPIO19 (D-) as a differential pair - matched length, ~90 ohm differential, no stubs, and keep them away from the switcher and the motor traces. Espressif reference designs connect these straight to the module with no series resistors; 0 ohm placeholders are cheap insurance if you want tuning options later.
 
-### Inside the driver sheet
+### VBUS on a board that also has 24 V
 
-```
-  +24V ──┬──────────────── VM
-         │
-    C1 100uF/35V          GND ─── GND
-    C2 100nF                     (both caps close to VM)
-         │
-        GND
+Two supplies can reach the 5 V rail, so decide which wins:
 
-  +3V3 ──┬──────────────── VIO        3.3 V, not 5 V
-    C3 100nF
-         │
-        GND
+| Approach | Behaviour |
+|---|---|
+| **VBUS through a Schottky to the 5 V rail** (recommended) | USB alone powers the logic for flashing and configuration; the buck powers it when 24 V is present. The diode stops the buck back-feeding the host |
+| Leave VBUS unconnected | Simplest and fully safe, but the board cannot be flashed or configured without the 24 V supply on |
 
-  DRV_EN ───────────────── EN         global label, active LOW
-  STEP ─────────────────── STEP       hier pin
-  DIR ──────────────────── DIR        hier pin
-  UART ────[ R 1k ]─────── PDN_UART   hier pin, own resistor per driver
-  MS1 ──────────────────── MS1        hier pin, strapped on parent
-  MS2 ──────────────────── MS2        hier pin, strapped on parent
+The Schottky option has a real safety benefit worth naming: with USB only, the logic runs and the web UI is reachable while **the motors cannot move**, because the drivers have no VM. That is a good state for firmware work and configuration.
 
-  GND ──────────────────── SPREAD     StealthChop
-  GND ──────────────────── CLK        internal oscillator
-                           VREF ───── see the VREF note above
-                           DIAG ───── NC (or a hier pin for StallGuard)
-                           INDEX ──── NC
+Set the buck feedback for about 5.1 V rather than exactly 5.0 V, so when both sources are present the buck reliably wins and the VBUS diode stays reverse biased.
 
-                     1A,1B,2A,2B ──── J-Mx, JST-XH 4-pin, inside the sheet
-```
+### ESD
 
-**Physical pin order varies by vendor.** Watterott SilentStepStick, BigTreeTech and FYSETC modules are all "A4988 footprint" but do not agree pin-for-pin. Wire by signal name against the datasheet for the exact part you are buying, not against a generic StepStick pinout.
+Fit a **USBLC6-2SC6** (or equivalent) on D+, D- and VBUS, close to the connector. A USB port is the most exposed net on the board and the ESP32-S3's USB pins are not otherwise protected.
 
-### Mechanics
+### No auto-reset circuit needed
 
-1. Draw the driver sheet once and save it, e.g. `tmc2209.kicad_sch`.
-2. On the root sheet, place a sheet symbol and point it at that **existing file** four more times. KiCad reuses the file rather than copying it - editing one edits all five, which is the point.
-3. Annotate. Each instance gets its own designators; the sheet path disambiguates them.
-4. Strap MS1/MS2 per instance on the root sheet, per the table above.
-5. ERC will flag any sheet pin left unconnected on any instance - useful, since a missed strap is otherwise silent until the UART does not answer.
+The ESP32-S3 enumerates natively over USB Serial/JTAG, so the DTR/RTS transistor pair that a CP2102-based design needs is not required. Keep the **BOOT (GPIO0) and RESET (EN) buttons** anyway - they are the recovery path if firmware ever wedges the USB stack.
