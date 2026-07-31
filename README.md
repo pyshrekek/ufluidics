@@ -59,37 +59,37 @@ At 1/16 microstepping with a 2 mm lead screw and a 14.5 mm syringe bore:
 
 Input flow is **fixed in firmware**, not pot-controlled:
 
-| Pump | Flow | Step rate |
-|---|---|---|
-| IN1 | 0.1 mL/min (100 uL/min) | 16.1 steps/s |
-| IN2 | 1 mL/min (1000 uL/min) | 161.5 steps/s |
-| **Total** | **1.1 mL/min** | - |
-| OUT3 at a 100% split (worst case) | 1.1 mL/min | 177.6 steps/s |
+| Pump | Flow | Share of total | Step rate |
+|---|---|---|---|
+| IN1 | 70 uL/min | 6.25% | 11.3 steps/s |
+| IN2 | 1050 uL/min | 93.75% | 169.6 steps/s |
+| **Total** | **1120 uL/min (1.12 mL/min)** | - | - |
+| OUT3 at a 100% split (worst case) | 1120 uL/min | - | 180.9 steps/s |
 
 The two pots only set how that fixed total is divided between the three outputs.
 
-Flow is smooth: the 0.103 uL step quantum is delivered 16 to 178 times a second, so pulsatility is not a concern.
-Peak rate is 178 steps/s against the 2000 steps/s ceiling - an 11x margin, and the shortest step interval is 5.6 ms.
-That is comfortably inside where a polled step generator is accurate, so AccelStepper's loop-latency behaviour is no longer a practical concern (it was, at the 11 mL/min ceiling this replaced).
+Flow is smooth: the 0.103 uL step quantum is delivered 11 to 181 times a second, so pulsatility is not a concern.
+Peak rate is 181 steps/s against the 2000 steps/s ceiling - an 11x margin, and the shortest step interval is 5.5 ms.
+That is comfortably inside where a polled step generator is accurate, so AccelStepper's loop-latency behaviour is not a practical concern at these rates.
 
 ### Barrel capacity is the binding constraint - read this
 
 The mechanics are comfortable at these rates; the syringes are what limit a run.
-Every barrel is currently 10 mL, and the 10:1 input ratio means they do not last remotely the same time:
+Every barrel is currently 10 mL, and the 15:1 input ratio means they do not last remotely the same time:
 
 | Pump | Flow | 10 mL barrel lasts |
 |---|---|---|
-| IN1 | 0.1 mL/min | 100 min |
-| IN2 | 1 mL/min | **10 min** |
-| OUT3 at a 100% split | 1.1 mL/min | **9 min** |
+| IN1 | 70 uL/min | 143 min |
+| IN2 | 1050 uL/min | **9.5 min** |
+| OUT3 at a 100% split | 1120 uL/min | **8.9 min** |
 
-**IN2 is the limiting pump.** A 10 mL barrel gives it a 10 minute run.
+**IN2 is the limiting pump.** A 10 mL barrel gives it under a 10 minute run.
 
-For both inputs to exhaust together, barrel volumes want the same 10:1 proportion as the flows - 10 mL on IN1 against 100 mL on IN2 both run 100 minutes, and a 60 mL syringe on IN2 gives 60 minutes.
+For both inputs to exhaust together, barrel volumes want the same 15:1 proportion as the flows - 10 mL on IN1 against 150 mL on IN2 would both run 143 minutes. A 60 mL syringe on IN2 gives 57 minutes, which is usually the practical sweet spot.
 Nothing in firmware can extend this; it is a straight volume-over-rate limit.
 
 The output side needs the same thought.
-The three outputs collectively receive the full 1.1 mL/min, so whichever fills first ends the run - and OUT3 can be handed up to 100% of it.
+The three outputs collectively receive the full 1120 uL/min, so whichever fills first ends the run - and OUT3 can be handed up to 100% of it.
 
 **Mixing barrel sizes needs a small firmware change.** `SYRINGE_ID_MM` and `SYRINGE_VOLUME_UL` are global today, one geometry shared by all five pumps, which is also what the end-of-travel check uses.
 Making them per-pump arrays in the shape of `STEP_PIN[]` and `DIR_SIGN[]` is roughly a 20 line change across both files.
@@ -191,8 +191,8 @@ Verified against the library source, not assumed.
 Everything of interest is in `config.h`:
 
 ```c
-#define IN1_FLOW_UL_MIN       100.0f  // fixed, 0.1 mL/min
-#define IN2_TO_IN1_RATIO      10.0f   // so IN2 = 1 mL/min, total = 1.1 mL/min
+#define IN1_FLOW_UL_MIN       70.0f   // fixed; IN1 takes 1/16 of total
+#define IN2_TO_IN1_RATIO      15.0f   // -> IN2 1050, total 1120 uL/min
 #define OUT_POT_MAX_FRAC   0.45f   // per-pot ceiling; OUT3 floor is 1 - 2x this
 #define SYRINGE_ID_MM      14.5f   // MEASURE THIS
 #define MICROSTEPS         16      // must match the driver jumpers

@@ -41,8 +41,8 @@
 // is what keeps the system zero-sum.
 //
 // uL/min throughout, so nothing in this file mixes mL and uL.
-#define IN1_FLOW_UL_MIN       70.0f    // 0.1 mL/min
-#define IN2_TO_IN1_RATIO      15.0f     // so IN2 = 1 mL/min, total = 1.1 mL/min
+#define IN1_FLOW_UL_MIN       70.0f    // IN1 takes 1/16 = 6.25% of total
+#define IN2_TO_IN1_RATIO      15.0f    // -> IN2 1050, total 1120 uL/min
 
 // Per-pot ceiling for the two pot-controlled outputs. OUT3 takes whatever is
 // left, so its floor is 1 - 2*OUT_POT_MAX_FRAC. Must stay strictly below 0.5.
