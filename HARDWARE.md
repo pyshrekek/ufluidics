@@ -216,6 +216,35 @@ Two caveats:
 
 It also still has a catch diode, so the high-di/dt loop still needs a tight layout. Fewer support components does not remove that risk - only the module does.
 
+##### LM2675 pin wiring (8-SOIC: 1 CB, 2 NC, 3 NC, 4 FB, 5 ON/OFF, 6 GND, 7 VIN, 8 VSW)
+
+| Pin | Wire to |
+|---|---|
+| VSW (8) | Inductor, **and** the catch diode cathode. 1 A 40 V Schottky, anode to GND |
+| CB (1) | 0.01 uF to **VSW**, not to GND - the bootstrap rides on the switch node |
+| FB (4) | Directly to the **+5 V output** at the output capacitor. No divider; the fixed-5.0 version has it internally, confirmed by the datasheet spec'ing feedback bias current as "ADJ Version Only". Route as a sense line away from VSW |
+| GND (6) | Ground plane |
+| VIN (7) | +24 V, input capacitors close |
+
+**ON/OFF polarity is unresolved and must be checked before ordering.** The electrical table specifies standby current at `ON/OFF Pin = 0V`, which implies HIGH = ON. But the pin carries an overbar in the symbol, and the rest of the SIMPLE SWITCHER family (LM2576, LM2596) is active-low. Confirm against Figure 3, the typical application circuit, in the TI datasheet.
+
+Two constraints hold either way:
+
+- **Never tie ON/OFF to VIN.** Absolute maximum on that pin is **6 V** against a 24 V rail. This destroys the part immediately.
+- **Never tie it to the 5 V output.** The output is 0 V at power-up, so the regulator would never start.
+
+Lay out both options and populate one - three resistor pads:
+
+```
+  VIN --[R1 30k]--+-- ON/OFF     active HIGH: fit R1 and R2
+                  |                -> ~3.3 V at 24 V in, plus free UVLO
+             [R2 4.3k]                (will not start below about 16 V)
+                  |
+                 GND             active LOW: omit R1, fit R2 as a short to GND
+```
+
+Keep the divider stiff - tens of kilohms, not hundreds - so the pin's own bias current does not shift the node, and check it stays under 6 V at worst-case VIN. Thresholds are 1.4 V typical, 2.0 V maximum.
+
 Go full discrete (TPS54360, documented below) only if you later need more than 1 A or reach volumes where part cost dominates.
 
 ### Discrete alternative: why 40 V minimum
