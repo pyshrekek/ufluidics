@@ -344,6 +344,21 @@ The Schottky option has a real safety benefit worth naming: with USB only, the l
 
 Set the buck feedback for about 5.1 V rather than exactly 5.0 V, so when both sources are present the buck reliably wins and the VBUS diode stays reverse biased.
 
+### The VBUS Schottky
+
+**SS34** (40 V, 3 A, SMA) or a Nexperia PMEG equivalent.
+
+| Spec | Target | Why |
+|---|---|---|
+| Vf | as low as practical, ~0.35 V at 250 mA | It comes straight off the LDO's headroom on USB-only power. Read it off the Vf-vs-If curve at 250 mA, not the summary table, which quotes full rating |
+| If | >=1 A | Draw is at most 500 mA - the 5.1k CC resistors advertise USB default current - but a bigger die also means lower Vf at 250 mA |
+| **VR** | **>=40 V** | Fault case, not normal operation |
+| Package | SMA or SMB | Lower thermal resistance, bigger die, lower Vf |
+
+The reverse-voltage target is the non-obvious one. In normal operation this diode sees about 5 V reverse, so a 20 V part looks generous. But if the buck ever fails short, 24 V lands on the 5 V rail, and **this diode is the only thing between that fault and the host USB port**. A 20 V part breaks down and passes it through. A 40 V part costs the same and turns "kills the laptop" into "blows the fuse".
+
+Pair it with the **AP7361C-33E-13** LDO rather than a 1117-family part. The Schottky drop plus a 1 V dropout leaves only ~100 mV of margin from a 4.75 V VBUS; the AP7361C's 140 mV dropout leaves ~960 mV. See HARDWARE.md.
+
 ### ESD
 
 Fit a **USBLC6-2SC6** (or equivalent) on D+, D- and VBUS, close to the connector. A USB port is the most exposed net on the board and the ESP32-S3's USB pins are not otherwise protected.

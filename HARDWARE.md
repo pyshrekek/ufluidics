@@ -133,7 +133,7 @@ The cost is two failure modes sockets introduce - a module can be inserted backw
 | Input TVS | SMBJ26A | Clamps inductive kickback from motor leads |
 | Bulk cap | 470-1000 uF, 35 V, low ESR | Plus the per-driver 100 uF above |
 | 24 V -> 5 V | **Recom R-78HB5.0-1.0** module (9-72 V in, 5 V 1 A, SIP-3) | One part, no external components. See below |
-| 5 V -> 3.3 V | **NCP1117-3.3 or TLV1117-33**, SOT-223 with a copper pour, or DPAK | Must shed 0.37 W continuous - see the thermal table |
+| 5 V -> 3.3 V | **AP7361C-33E-13**, SOT-223 | 1 A, 140 mV dropout at 300 mA. Low dropout is required - see below |
 | 3.3 V bulk | 22 uF + 100 nF at the module | Espressif minimum is 10 uF; WiFi TX is bursty |
 
 ### Power budget
@@ -194,9 +194,26 @@ Thermal resistance depends on the package **and** the copper under it:
 
 So the requirement is: **a part rated 600 mA or more, in a package that sheds 0.4 W on the copper you actually give it.** SOT-223 with a pour or DPAK both satisfy that.
 
-**NCP1117-3.3** or **TLV1117-33** are the picks - both are available in SOT-223 and DPAK, so the package is a layout choice rather than a different part. AP2112K and RT9013 are ruled out not because SOT-23-5 is inherently wrong but because that is the only package they come in.
+AP2112K and RT9013 are ruled out not because SOT-23-5 is inherently wrong but because that is the only package they come in.
 
-Prefer either over a generic AMS1117: the AMS1117 datasheet calls for a 22 uF tantalum output capacitor and can be marginal on pure ceramic. Check the output capacitor ESR requirement of whichever part you choose.
+#### Dropout also matters, because of the USB path
+
+The obvious picks - NCP1117, TLV1117, AMS1117 - are all ~1 V dropout parts, and that fails when the board runs on USB alone:
+
+```
+USB VBUS, spec minimum at the device        4.75 V
+  - VBUS Schottky Vf at 250 mA             -0.35 V
+  - 1117-family dropout at 250 mA          -1.00 V
+  = 3.40 V                                  only 100 mV of margin
+```
+
+A long cable, a tired port or a hub eats that. The symptom is an ESP32 that resets during Wi-Fi transmit bursts, which looks exactly like a firmware bug and is miserable to chase.
+
+**AP7361C-33E-13** fixes it: 140 mV dropout at 300 mA, 1 A, SOT-223, with current limit and thermal shutdown built in. Same package and the same 0.37 W, so the thermal analysis above is unchanged, and margin goes from 100 mV to about 960 mV.
+
+Input range is 2.2-6 V, which covers both the 5.1 V buck output and a 5.25 V VBUS.
+
+With 24 V present none of this matters - the buck holds 5.1 V and any of these parts would be fine. It is only the USB-only case that is tight, and USB-only is a state worth keeping usable.
 
 ### TPS54360 pin-by-pin
 
