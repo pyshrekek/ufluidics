@@ -257,7 +257,7 @@ The series-jumper approach is the recommended one: three cheap parts turn the mo
 
 **GPIO26-32 are the SPI flash.** Unusable.
 
-**GPIO33-37 are only free on the non-PSRAM part.** This is the whole reason for specifying N16 over N16R8 - octal PSRAM consumes them.
+**GPIO35-37 are only free on the non-PSRAM part.** Octal PSRAM consumes them, which is why the SPI display header is N16-only and goes through 0R jumpers.
 
 **GPIO19 and GPIO20 are native USB D- and D+.** Reserve them; that is what deletes the USB-serial chip.
 
