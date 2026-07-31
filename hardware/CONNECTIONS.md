@@ -86,7 +86,34 @@ Two very different parts share the name TMC2209. A **SilentStepStick-style modul
 
 The pin names decide which you have: if your symbol shows `VS`, `VCP`, `CPI`, `CPO`, `5VOUT`, `BRA` and `BRB`, it is the bare IC.
 
-#### Bare TMC2209 (QFN-28)
+#### SilentStepStick-style module (socketed - what this board uses)
+
+| Module pin | Connects to | Notes |
+|---|---|---|
+| VMOT | +24 V | 100 uF electrolytic + 100 nF at the module |
+| GND | Ground plane | |
+| VIO / VDD | +3.3 V | Logic reference |
+| EN | DRV_EN net | Active LOW |
+| STEP, DIR | Hierarchical sheet pins | |
+| PDN_UART | Bus, through a 1k series resistor | |
+| MS1, MS2 | Strapped per instance | |
+| VREF | No-Connect | The onboard trimpot already drives it |
+| DIAG, INDEX | No-Connect | Optional |
+| 1A, 1B / 2A, 2B | J-Mx | Motor coils |
+
+Charge pump, sense resistors and regulator capacitors are all on the module - roughly forty passives that do not appear on this board's BOM. Still fit **100 uF electrolytic + 100 nF per socket** on VMOT: the module's own decoupling is small, and the socket adds inductance between it and the bulk capacitor.
+
+Footprint: the standard 2x8 0.1 in StepStick outline, `Module:Pololu_Breakout-16_15.2x20.3mm` in the KiCad library. Use female headers so a failed driver is a swap rather than a rework.
+
+**Pin order differs between Watterott, BigTreeTech and FYSETC** even though all three claim the A4988 footprint. Once you socket them, the board is committed to whichever pinout you route - pick the exact part first and wire by signal name against its datasheet.
+
+##### Two hazards the socket introduces
+
+**A module inserted backwards is destroyed instantly**, and nothing stops it mechanically - both rows are 8 pins at the same pitch. Mitigate on silkscreen: outline the module body, mark pin 1, and label which end carries VMOT. A reversed driver puts 24 V onto the logic pins and can take the ESP32 with it.
+
+**Never hot-plug a driver.** Removing or inserting one with VMOT live kills the output stage. Power down completely before swapping - which is the whole reason for sockets, so it is worth putting on the silkscreen too.
+
+#### Bare TMC2209 (QFN-28) - reference only, not used on this board
 
 | Pin | Connects to | Required? |
 |---|---|---|
@@ -117,23 +144,6 @@ Leaving VS, VCP, CPI/CPO or 5VOUT open means the part does not run at all: the c
 **Per-driver passive count, bare IC:** 2x 0.11 ohm sense, 22 nF, 2x 100 nF, 2.2 uF, 100 nF, plus 100 nF + 100 uF on VS. About eight parts each, forty across the board. That is the real cost of bare ICs over modules - the silicon is cheaper, the BOM line count is not.
 
 Sense resistor value sets the current ceiling: 0.11 ohm gives roughly 1.4 A RMS at full scale, which is what makes the 800 mA in `TMC_RMS_CURRENT_MA` a comfortable setting rather than a stretch.
-
-#### SilentStepStick-style module
-
-| Module pin | Connects to | Notes |
-|---|---|---|
-| VMOT | +24 V | 100 uF electrolytic + 100 nF at the module |
-| GND | Ground plane | |
-| VIO / VDD | +3.3 V | Logic reference |
-| EN | DRV_EN net | Active LOW |
-| STEP, DIR | Hierarchical sheet pins | |
-| PDN_UART | Bus, through a 1k series resistor | |
-| MS1, MS2 | Strapped per instance | |
-| VREF | No-Connect | The onboard trimpot already drives it |
-| DIAG, INDEX | No-Connect | Optional |
-| 1A, 1B / 2A, 2B | J-Mx | Motor coils |
-
-Charge pump, sense resistors and regulator capacitors are all on the module. Pin *order* differs between Watterott, BigTreeTech and FYSETC even though all three claim the A4988 footprint - wire by signal name against the datasheet for the exact part.
 
 ### Per-driver
 

@@ -304,6 +304,12 @@ void setup() {
   // TODO: TMC2209 UART init - RMS current, 1/16 + MicroPlyer, StealthChop.
   //       Pins TMC_UART_A_PIN (drivers 0-3) and TMC_UART_B_PIN (driver 4);
   //       a 2-bit MS1/MS2 address means one bus addresses only four.
+  //
+  //       MUST call driver.I_scale_analog(false) before setting the current.
+  //       GCONF bit 0 defaults to 1, which makes VREF scale the run current -
+  //       so on a SilentStepStick the onboard trimpot silently overrides
+  //       whatever rms_current() was asked for. Clearing it selects the
+  //       internal reference and makes TMC_RMS_CURRENT_MA mean what it says.
   // TODO: WiFi (AP mode + WPA2), async web server, WebSocket telemetry at 1 Hz.
   // TODO: endstop homing on startup.
   // TODO: persist calibration in NVS via Preferences.
