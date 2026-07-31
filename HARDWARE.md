@@ -25,7 +25,9 @@ By that table only classic ESP32 and RP2350 clear five pumps, and ESP32-S3 is a 
 1. **Drive the TMC2209 at 1/16 with MicroPlyer interpolation to 1/256**, rather than 1/256 natively. The driver interpolates internally, so you get 1/256 smoothness at 1/16 step rates. Native 1/256 would multiply every rate by 16 for no benefit.
 2. At that setting the **peak rate across the whole system is 181 steps/s** (OUT3 at a 100% split, current flow config).
 
-A DDS step generator on a 20 kHz hardware-timer ISR - five 32-bit phase accumulators, the design already written for the Mega in this repo's git history - gives **111 timer ticks per step at peak** and a rate resolution of 5e-6 steps/s. On a 240 MHz dual-core part with the motion task pinned to core 1, that is not close to a limit.
+A DDS step generator on a 20 kHz hardware-timer ISR - five 32-bit phase accumulators, one step per accumulator wrap - gives **111 timer ticks per step at peak** and a rate resolution of 5e-6 steps/s. On a 240 MHz dual-core part with the motion task pinned to core 1, that is not close to a limit.
+
+This design was written and bench-compiled for the Mega early in this project, then replaced by AccelStepper before the repository existed - so it predates git history and has to be rewritten rather than recovered. It is roughly 40 lines.
 
 So: **use a timer DDS, not FastAccelStepper**, and the per-variant channel table stops mattering. The MCU can then be chosen on the things that actually shape the board - GPIO count, ADC behaviour, USB, ecosystem.
 

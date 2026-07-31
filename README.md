@@ -21,6 +21,41 @@ Used in constant-speed mode only.
 ## Repository layout
 
 ```
+ufluidics/
+  README.md          this file - the Mega firmware: wiring, calibration, verification
+  HARDWARE.md        PCB spec for the ESP32-S3 revision
+
+  arduino/ufluidics/ Mega 2560 firmware (Arduino IDE)
+    ufluidics.ino
+    config.h
+
+  firmware/          ESP32-S3 firmware (PlatformIO) - see firmware/README.md
+    platformio.ini
+    include/config.h
+    src/{flow,motion,main}
+    data/            LittleFS web assets
+
+  hardware/          KiCad project
+    ufluidics.kicad_{pro,sch,pcb}
+```
+
+Two builds coexist deliberately: the Mega rig stays working while the ESP32 board is developed. `src/flow.cpp` in the ESP32 build is the AVR flow math ported without modification - see `firmware/README.md`.
+
+**`arduino/ufluidics/` must keep that directory name.** The Arduino IDE requires a sketch folder named exactly after its `.ino`. The repository root can be named anything.
+
+The three KiCad files must also keep a shared basename - that is a KiCad requirement, not a convention. Rename all three together or none.
+
+## Dependency
+
+**AccelStepper** by Mike McCauley.
+Arduino IDE: `Tools > Manage Libraries`, search "AccelStepper", install.
+
+Used in constant-speed mode only.
+`runSpeed()` is polled for all five pumps on every loop pass and no acceleration ramp is configured, because steady volumetric flow is the whole point and a ramp would corrupt the mass balance every time a pot moved.
+
+## Repository layout
+
+```
 ufluidics/              <- must keep this directory name, see below
   ufluidics.ino         firmware: stepper setup, state machine, flow math, telemetry
   config.h              every tunable constant, plus compile-time sanity checks
