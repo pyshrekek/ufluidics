@@ -132,9 +132,50 @@ The cost is two failure modes sockets introduce - a module can be inserted backw
 | Reverse polarity | P-MOSFET (e.g. SI2333) in the high side | Better than a Schottky - no 0.5 V drop, no heat |
 | Input TVS | SMBJ26A | Clamps inductive kickback from motor leads |
 | Bulk cap | 470-1000 uF, 35 V, low ESR | Plus the per-driver 100 uF above |
-| 24 V -> 5 V | **Buck rated 40 V or higher**: TPS54360 (60 V, 3.5 A) or LMR14030 (40 V, 3 A). LM2596 (40 V) as the cheap ubiquitous fallback | See voltage rating note below |
-| 5 V -> 3.3 V | AMS1117-3.3 (1 A) with copper pour, or AP2112K-3.3 | ESP32 WiFi peaks near 500 mA |
+| 24 V -> 5 V | **TPS54360** (60 V, 3.5 A). Alternatives: MP4560 (55 V, 3 A) cheaper, LM2596 (40 V) if you want through-hole | 40 V minimum rating - see below |
+| 5 V -> 3.3 V | **TLV1117-33 or NCP1117-3.3, SOT-223**. Not a SOT-23 part | 800 mA - 1 A. Thermals decide the package |
 | 3.3 V bulk | 22 uF + 100 nF at the module | Espressif minimum is 10 uF; WiFi TX is bursty |
+
+### Power budget
+
+| Rail | Average | Peak |
+|---|---|---|
+| 3.3 V | 215 mA (ESP32 120, display 80, VIO x5 5, LEDs 10) | 595 mA (ESP32 WiFi TX burst) |
+| 5 V | 215 mA, all of it feeding the LDO | 595 mA |
+| From 24 V for logic | **~53 mA** | ~150 mA |
+
+Logic draw off the 24 V rail is trivial next to the motors. A 3 A buck is 3-4x oversized, which is deliberate: margin is nearly free and covers a fan later.
+
+### Buck: why 40 V minimum
+
+Common parts sized "for 24 V" - TPS54331, MP1584, AP63203, TPS54202 - are rated 28-32 V. On a rail shared with five inductive loads, motor back-EMF and hot-unplug transients exceed that. The failure mode is a shorted high-side FET putting 24 V onto the 5 V rail and through everything downstream.
+
+**TPS54360** is the recommended part: 4.5-60 V, 3.5 A, adjustable 100 kHz - 2.5 MHz, SOIC-8 PowerPAD. The 60 V rating is generous margin, and TI WEBENCH will generate the inductor, capacitors, feedback divider and a layout for your exact operating point - worth using rather than hand-picking values.
+
+Set the switching frequency around 400-600 kHz. Higher shrinks the inductor but pushes more high-frequency energy at the ADC; lower needs a bulkier inductor.
+
+For a first spin, a soldered-down pre-made 24 V -> 5 V buck module is a legitimate way to avoid designing a switcher at all.
+
+### LDO: the package is the decision, not the part number
+
+At 215 mA average from 5 V the LDO dissipates 0.37 W, peaking near 1.0 W during WiFi transmit. That rules out the small packages people usually reach for:
+
+| Package | Theta JA | Average rise | Peak rise |
+|---|---|---|---|
+| SOT-23-5 (AP2112K, RT9013...) | ~250 C/W | **+91 C** | **+253 C** |
+| **SOT-223** (TLV1117, NCP1117, AMS1117) | ~60 C/W | +22 C | +61 C |
+| DPAK | ~40 C/W | +15 C | +40 C |
+
+**Use SOT-223 with a copper pour.** A SOT-23-5 LDO is the default choice for 3.3 V and it does not work here.
+
+Prefer **TLV1117-33** or **NCP1117-3.3** over a generic AMS1117: the AMS1117 datasheet calls for a 22 uF tantalum output capacitor and can be marginal on pure ceramic. Check the output capacitor ESR requirement of whichever part you pick.
+
+### Why not go 24 V straight to 3.3 V
+
+A single 24 V -> 3.3 V buck is feasible - the 13.7% duty at 500 kHz is within a TPS54360's minimum on-time - and it would be more efficient. Two reasons not to:
+
+- **The LDO's PSRR is doing real work.** It filters switcher ripple out of the rail feeding a 12-bit ADC that reads the pots. Feeding the ESP32 directly from a switcher puts that ripple straight into the flow split.
+- Nothing else on this board needs 5 V, but having the rail costs almost nothing and gives you a fan option.
 
 ### Power topology
 
@@ -147,10 +188,6 @@ The ESP32-WROOM module has **no onboard regulator** - that is a dev-board featur
 If you socket an ESP32 DevKitC instead of reflowing a bare module, it brings its own 3.3 V LDO, and you only need the 24 V -> 5 V stage feeding its 5 V/VIN pin. That is the lower-risk option for a first board spin.
 
 **Never linear-regulate from 24 V.** At the ESP32's 500 mA WiFi peak, a 24 V -> 3.3 V linear regulator dissipates **10.4 W**. The same LDO from 5 V dissipates 0.85 W, which is why the intermediate rail exists. This is not an efficiency preference; it is the difference between a warm part and a fire.
-
-**Buck input rating is not a place to economise.** Common parts like TPS54331 and MP1584 are rated 28 V max. On a 24 V rail shared with five inductive loads, motor back-EMF and hot-unplug transients will exceed that, and the failure mode is a shorted high-side FET putting 24 V onto the 5 V rail and through everything downstream. Specify **40 V minimum**, and keep the input TVS.
-
-**Logic current is negligible.** The whole 5 V rail - ESP32, USB-serial, OLED, LEDs - runs about 800 mA, which is roughly 200 mA drawn from 24 V. Size the buck for 2-3 A anyway; the margin is nearly free and covers a fan.
 
 **PSU sizing:** five motors at 24 V, chopper-driven, average maybe 0.5 A each into the drivers. Specify a **24 V 5 A (120 W)** supply. That is generous, and generous is correct for inductive loads.
 
