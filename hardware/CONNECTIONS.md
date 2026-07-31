@@ -95,7 +95,7 @@ The pin names decide which you have: if your symbol shows `VS`, `VCP`, `CPI`, `C
 | VIO / VDD | **+3.3 V** | Logic reference, not the operating supply - see below |
 | EN | DRV_EN net | Active LOW |
 | STEP, DIR | Hierarchical sheet pins | |
-| PDN_UART | Bus, through a 1k series resistor | |
+| PDN_UART | Bus, through a 1k series resistor | If the module has two PDN pads they are one net - wire one, NC the other |
 | MS1, MS2 | Strapped per instance | |
 | VREF | No-Connect | The onboard trimpot already drives it |
 | DIAG, INDEX | No-Connect | Optional |
@@ -106,6 +106,18 @@ Charge pump, sense resistors and regulator capacitors are all on the module - ro
 Footprint: the standard 2x8 0.1 in StepStick outline, `Module:Pololu_Breakout-16_15.2x20.3mm` in the KiCad library. Use female headers so a failed driver is a swap rather than a rework.
 
 **Pin order differs between Watterott, BigTreeTech and FYSETC** even though all three claim the A4988 footprint. Once you socket them, the board is committed to whichever pinout you route - pick the exact part first and wire by signal name against its datasheet.
+
+##### Two PDN pins, and CLK
+
+**If your module has two pads labelled PDN, they are the same net.** The TMC2209 die carries exactly one PDN_UART pin; modules duplicate it so a single board drops into hosts expecting different StepStick pinouts. Confirm with a continuity check before routing.
+
+Wire **one PDN pin through its 1k to the bus and leave the other No-Connect.** Tying both to the same node after the resistor is harmless, but do not give each its own 1k - two in parallel is 500 ohm, halving the series impedance the half-duplex line is built around.
+
+**CLK ties to GND**, selecting the internal ~12 MHz oscillator.
+
+- Do not leave it floating. It is a clock input, and floating next to a 24 V chopper it will pick up switching noise and upset the chopper.
+- Oscillator accuracy does not affect flow. Position comes entirely from STEP pulse count, which the DDS controls; CLK only sets chopper and StealthChop PWM frequency, so its tolerance is irrelevant here.
+- Some modules ground CLK on-board and still expose the pad. Check yours - if so it is a No-Connect on your side.
 
 ##### VIO must be 3.3 V, and this is not a preference
 
@@ -141,10 +153,10 @@ Do not tie VIO to the module's `5VOUT` pin either, where one is exposed; that is
 | OB1, OB2 | J-Mx pins 3, 4 | Motor coil B |
 | EN (ENN) | DRV_EN net, active LOW | |
 | STEP, DIR | Hierarchical sheet pins | |
-| PDN_UART | Bus, through a 1k series resistor | |
+| PDN_UART | Bus, through a 1k series resistor | If the module has two PDN pads they are one net - wire one, NC the other |
 | MS1, MS2 | Strapped per instance - see the address table | |
 | SPREAD | GND | StealthChop |
-| CLK | GND | Selects the internal oscillator |
+| CLK | GND | Selects the internal oscillator. Never leave floating |
 | DIAG | No-Connect, or a spare GPIO for StallGuard | Optional |
 | INDEX | No-Connect | Optional |
 | NC | No-Connect | |
