@@ -2,6 +2,8 @@
 
 Target: a single board carrying five stepper drivers, an MCU, and a web interface, replacing the Mega + A4988 breakout build.
 
+KiCad project lives in `hardware/`.
+
 ## MCU selection
 
 ### First: the constraint everyone assumes is binding, is not
