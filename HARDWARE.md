@@ -132,7 +132,7 @@ The cost is two failure modes sockets introduce - a module can be inserted backw
 | Reverse polarity | P-MOSFET (e.g. SI2333) in the high side | Better than a Schottky - no 0.5 V drop, no heat |
 | Input TVS | SMBJ26A | Clamps inductive kickback from motor leads |
 | Bulk cap | 470-1000 uF, 35 V, low ESR | Plus the per-driver 100 uF above |
-| 24 V -> 5 V | **TPS54360** (60 V, 3.5 A). Alternatives: MP4560 (55 V, 3 A) cheaper, LM2596 (40 V) if you want through-hole | 40 V minimum rating - see below |
+| 24 V -> 5 V | **Recom R-78HB5.0-1.0** module (9-72 V in, 5 V 1 A, SIP-3) | One part, no external components. See below |
 | 5 V -> 3.3 V | **NCP1117-3.3 or TLV1117-33**, SOT-223 with a copper pour, or DPAK | Must shed 0.37 W continuous - see the thermal table |
 | 3.3 V bulk | 22 uF + 100 nF at the module | Espressif minimum is 10 uF; WiFi TX is bursty |
 
@@ -146,7 +146,30 @@ The cost is two failure modes sockets introduce - a module can be inserted backw
 
 Logic draw off the 24 V rail is trivial next to the motors. A 3 A buck is 3-4x oversized, which is deliberate: margin is nearly free and covers a fan later.
 
-### Buck: why 40 V minimum
+### Buck: use a module, not a discrete design
+
+At 215 mA average the logic rail is a trivial load, and a discrete switcher earns nothing for it. Compare:
+
+| | Recom R-78HB5.0-1.0 | TPS54360 discrete |
+|---|---|---|
+| Input range | **9-72 V** | 4.5-60 V |
+| Output | 5 V, 1 A | 5 V, 3.5 A |
+| External components | **1 (the module)** | ~16 |
+| Layout risk | None - shielded module | High di/dt loop, must be tight |
+| Protection | Thermal shutdown + short circuit, built in | Built in, but yours to lay out |
+| Cost | ~$10 | ~$4 |
+
+For a low-volume instrument the module is the obvious trade: about six dollars buys away fifteen components, a critical layout, and a whole category of bring-up debugging. It is SIP-3 and pin-compatible with an LM7805.
+
+**Specify the 1.0 A version, not the 0.5 A.** Peak draw is about 595 mA (ESP32 Wi-Fi transmit, display, LEDs). Riding a 95 mA deficit through a 2 ms burst on bulk capacitance would need roughly 1900 uF to hold droop under 100 mV - not worth it when the 1 A part sits at 60% of rating and needs nothing.
+
+The 9-72 V input range also delivers the voltage margin argued for below, without having to reason about it: a 24 V motor rail with back-EMF and hot-unplug transients is nowhere near 72 V.
+
+Traco **TSR 1-2450** (6.5-36 V, 1 A) is an equivalent alternative, with less input margin.
+
+Go discrete only if you later need more than 1 A, want an all-SMD assembly, or reach volumes where the part cost matters. The TPS54360 design is documented below for that case.
+
+### Discrete alternative: why 40 V minimum
 
 Common parts sized "for 24 V" - TPS54331, MP1584, AP63203, TPS54202 - are rated 28-32 V. On a rail shared with five inductive loads, motor back-EMF and hot-unplug transients exceed that. The failure mode is a shorted high-side FET putting 24 V onto the 5 V rail and through everything downstream.
 
