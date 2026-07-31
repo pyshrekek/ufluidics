@@ -175,6 +175,46 @@ So the requirement is: **a part rated 600 mA or more, in a package that sheds 0.
 
 Prefer either over a generic AMS1117: the AMS1117 datasheet calls for a 22 uF tantalum output capacitor and can be marginal on pure ceramic. Check the output capacitor ESR requirement of whichever part you choose.
 
+### TPS54360 pin-by-pin
+
+Values below come from the TPS54360 datasheet (SLVSBB4G), whose own worked design example happens to be a 5 V output.
+
+**The TPS54360 is non-synchronous.** It "requires an external catch diode between the SW terminal and GND" - a Schottky, cathode at SW, anode to GND, 60 V and 3 A or better (B360A, SS36). Omitting it is the most likely way to end up with a board that does not switch.
+
+| Pin | Wire to | Value |
+|---|---|---|
+| 1 BOOT | Capacitor to **SW** (not to GND) | 0.1 uF, X5R or better, 10 V+ |
+| 2 VIN | +24 V | Input capacitors as close as possible |
+| 3 EN | Divider from VIN to GND | 887k / 53.6k -> UVLO on at 20 V, off at 17 V |
+| 4 RT/CLK | Resistor to GND | **162 k = 600 kHz** (the datasheet's own value) |
+| 5 FB | Divider tap from +5 V | **53.6 k top / 10.2 k bottom -> 5.004 V** |
+| 6 COMP | Series R+C to GND, small C in parallel | ~13 k + ~2.2 nF, ~12 pF parallel - **verify, see below** |
+| 7 GND | Ground plane | |
+| 8 SW | Inductor **and** catch diode cathode | 8.2 uH |
+| 9 Thermal pad | GND, thermal vias | Datasheet: "must be electrically connected" |
+
+The reference is 0.8 V, so `Vout = 0.8 x (1 + Rtop/Rbot)`. Frequency follows `RT(kohm) = 101756 x fSW(kHz)^-1.008`.
+
+**EN floats to enable** - the datasheet says so explicitly. Do not rely on that. The divider gives input undervoltage lockout, which matters on a rail shared with five motors: without it the converter will try to start into a sagging supply.
+
+**COMP is the one value not to copy blindly.** Compensation depends on the actual inductor and output capacitance, and TI's example runs 12 V in against our 24 V. Run WEBENCH at Vin = 24 V, Vout = 5 V for the R/C pair.
+
+#### Operating point note
+
+The logic rail draws about 250 mA from a 3.5 A part - **7% of rating**. Inductor ripple at 24 V in with 8.2 uH at 600 kHz is 0.80 A pk-pk, comfortably above the DC load, so the converter sits in discontinuous conduction and Eco-mode pulse-skipping essentially always. That is efficient and fine, but it means light-load behaviour matters more here than the load-step response TI's example is tuned for.
+
+#### Layout
+
+The high di/dt loop is VIN -> internal FET -> SW -> catch diode -> GND. Keep it physically tiny:
+
+- Input capacitor across VIN and GND, as close to the pins as the footprint allows.
+- Catch diode immediately at SW and GND, in the same loop.
+- SW copper only as large as the current needs - it is the noisy node and radiates in proportion to its area.
+- FB trace short, routed away from SW and the inductor, tapped at the output capacitor.
+- Thermal pad to the ground plane with a via array.
+
+Keep the whole switcher away from the analog corner. The pots feed a 12-bit ADC, and this is the loudest thing on the board.
+
 ### Why not go 24 V straight to 3.3 V
 
 A single 24 V -> 3.3 V buck is feasible - the 13.7% duty at 500 kHz is within a TPS54360's minimum on-time - and it would be more efficient. Two reasons not to:
