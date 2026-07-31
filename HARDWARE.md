@@ -167,6 +167,31 @@ The 9-72 V input range also delivers the voltage margin argued for below, withou
 
 Traco **TSR 1-2450** (6.5-36 V, 1 A) is an equivalent alternative, with less input margin.
 
+#### If the board is JLCPCB-assembled
+
+The Recom is SIP-3 through-hole and is unlikely to be in JLC's library at all. Two ways round it:
+
+**Keep the module and hand-solder it.** Mark it DNP in the assembly BOM, place the footprint, and fit it yourself - it is three through-hole pins. JLC assembles everything else. This keeps the 72 V input margin and the one-component simplicity, and costs about thirty seconds at the bench. For a low-volume instrument this is usually the right answer.
+
+**Or switch to an SMD part JLC stocks.** Selection criteria, in priority order:
+
+1. **Input rating 40 V minimum** - the rail is shared with five inductive loads
+2. 600 mA or more output (595 mA peak)
+3. Internally compensated, to avoid a COMP network
+4. Fixed 5 V, to avoid a feedback divider
+
+Candidates worth checking against the live library at `jlcpcb.com/parts`:
+
+| Part | Vin | Iout | Freq | Notes |
+|---|---|---|---|---|
+| **LM2675MX-5.0/NOPB** | 40 V | 1 A | 260 kHz | SOIC-8, internally compensated, fixed 5 V. Best of these if stocked |
+| **XL1509-5.0E1** (LCSC C61063) | 40 V | 2 A | 150 kHz | SOP-8, about $0.11, near-certain LCSC stock. Low frequency means a bulky inductor |
+| **MP4560** | 55 V | 3 A | adjustable | Better input margin; MPS parts are generally well stocked at LCSC |
+
+Stock moves, and it cannot be checked from here - verify on JLC's parts search before committing the schematic. Extended parts carry a small per-part setup fee but are otherwise fine.
+
+Note that all of the 40 V candidates sit at the stated minimum rather than comfortable margin. Keep the input TVS regardless, and prefer the 55 V option if it is available.
+
 #### Middle option: LM2675MX-5.0
 
 If SMD assembly or part cost matters more than component count, the **LM2675MX-5.0/NOPB** sits between the module and a full discrete design: 6.5-40 V in, 1 A, 260 kHz fixed, internally compensated, and the fixed-5.0 V version needs no feedback divider.
