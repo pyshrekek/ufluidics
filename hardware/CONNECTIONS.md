@@ -92,7 +92,7 @@ The pin names decide which you have: if your symbol shows `VS`, `VCP`, `CPI`, `C
 |---|---|---|
 | VMOT | +24 V | 100 uF electrolytic + 100 nF at the module |
 | GND | Ground plane | |
-| VIO / VDD | +3.3 V | Logic reference |
+| VIO / VDD | **+3.3 V** | Logic reference, not the operating supply - see below |
 | EN | DRV_EN net | Active LOW |
 | STEP, DIR | Hierarchical sheet pins | |
 | PDN_UART | Bus, through a 1k series resistor | |
@@ -106,6 +106,17 @@ Charge pump, sense resistors and regulator capacitors are all on the module - ro
 Footprint: the standard 2x8 0.1 in StepStick outline, `Module:Pololu_Breakout-16_15.2x20.3mm` in the KiCad library. Use female headers so a failed driver is a swap rather than a rework.
 
 **Pin order differs between Watterott, BigTreeTech and FYSETC** even though all three claim the A4988 footprint. Once you socket them, the board is committed to whichever pinout you route - pick the exact part first and wire by signal name against its datasheet.
+
+##### VIO must be 3.3 V, and this is not a preference
+
+VIO sets the driver's logic reference only; the chip runs from VM through its own regulator, so 3.3 V costs nothing.
+
+At 5 V two things break in opposite directions:
+
+- **Inbound:** the input-high threshold is roughly 0.7 x VIO, so 3.5 V at a 5 V VIO. The ESP32 drives 3.3 V, which lands below it. Missed STEP pulses with no error anywhere.
+- **Outbound:** `PDN_UART` is bidirectional. The driver answers register reads at VIO, so a 5 V VIO drives 5 V into GPIO17/GPIO18. **The ESP32-S3 is not 5 V tolerant**, and both pins fan out to five drivers - one wrong rail damages the MCU on the first UART read.
+
+Do not tie VIO to the module's `5VOUT` pin either, where one is exposed; that is the internal regulator and puts you in the same place. VIO draw is microamps to low milliamps, so five drivers are nothing for the 3.3 V LDO.
 
 ##### Two hazards the socket introduces
 
