@@ -129,39 +129,56 @@
 #define POT_RAW_MAX           (ADC_MAX_COUNT - POT_RAW_MIN) // ~4031
 
 // ---------------------------------------------------------------------------
-// Pin map - ESP32-S3-WROOM-1-N16
+// Pin map - ESP32-S3-WROOM-1
 //
-// Avoided: GPIO19/20 (native USB D-/D+), GPIO26-32 (SPI flash),
-//          GPIO0/3/45/46 (strapping).
-// GPIO33-37 are only free because this is the N16 part; N16R8's octal PSRAM
-// would take them.
+// Deliberately avoids GPIO33-37, so this map works on BOTH the N16 and the
+// octal-PSRAM N16R8 parts. R8 consumes GPIO33-37 for the SPI0/1 data lines,
+// and a map that used them would fail on the wrong part with no obvious
+// symptom beyond pumps that never move.
+//
+// Also avoided: GPIO19/20 (native USB D-/D+), GPIO26-32 (SPI flash),
+//               GPIO0/3/45/46 (strapping).
+//
+// Budget: 26 pins used of 27 available on R8, of 32 on N16.
+// GPIO48 is left free because DevKitC-1 boards wire it to an onboard RGB LED.
 // ---------------------------------------------------------------------------
 
 // STEP pins must stay contiguous and all above GPIO32, so the ISR sets and
 // clears every pump with a single GPIO_OUT1 register write.
-#define STEP_GPIO_BASE  35
-#define STEP_GPIO_MASK  0xF8u          // bits 3..7 of OUT1 = GPIO35..39
+#define STEP_GPIO_BASE  38
+#define STEP_GPIO_MASK  0x7C0u         // bits 6..10 of OUT1 = GPIO38..42
 
-#define EN_PIN          34             // shared across all 5 drivers, active LOW
-#define TMC_UART_A_PIN  33             // single-wire UART, drivers 0-3
-#define TMC_UART_B_PIN  21             // single-wire UART, driver 4
+#define EN_PIN          16             // shared across all 5 drivers, active LOW
+#define TMC_UART_A_PIN  17             // single-wire UART, drivers 0-3
+#define TMC_UART_B_PIN  18             // single-wire UART, driver 4
 
 #define POT_A_PIN       1              // ADC1_CH0 - OUT1 fraction
 #define POT_B_PIN       2              // ADC1_CH1 - OUT2 fraction
 
-#define RUN_SWITCH_PIN  9              // maintained, closed to GND
-#define ESTOP_SENSE_PIN 10             // sense only; the cut is hardware
+#define RUN_SWITCH_PIN  13             // maintained, closed to GND
+#define ESTOP_SENSE_PIN 14             // sense only; the cut is hardware
 #define LED_RUN_PIN     43
 #define LED_FAULT_PIN   44
 
-#define I2C_SDA_PIN     11
-#define I2C_SCL_PIN     12
+#define I2C_SDA_PIN     47
+#define I2C_SCL_PIN     21
 
-#define TFT_SCK_PIN     13
-#define TFT_MOSI_PIN    14
-#define TFT_CS_PIN      16
-#define TFT_DC_PIN      17
-#define TFT_RST_PIN     18
+// SPI display header, N16 ONLY.
+//
+// These sit on the pins octal PSRAM claims, so an R8 part has no room for
+// them - use the I2C display header instead. Building with PSRAM enabled and
+// SPI display pins defined would silently fight the memory bus, so it is a
+// hard error rather than a comment.
+#ifndef BOARD_HAS_PSRAM
+  #define TFT_SPI_AVAILABLE 1
+  #define TFT_SCK_PIN     33
+  #define TFT_MOSI_PIN    34
+  #define TFT_CS_PIN      35
+  #define TFT_DC_PIN      36
+  #define TFT_RST_PIN     37
+#else
+  #define TFT_SPI_AVAILABLE 0
+#endif
 
 // ---------------------------------------------------------------------------
 // Pump layout
@@ -175,9 +192,9 @@
 #define N_INPUTS  2
 #define N_POTS    2
 
-static const uint8_t STEP_PIN[N_PUMPS]  = { 35, 36, 37, 38, 39 };
-static const uint8_t DIR_PIN[N_PUMPS]   = { 40, 41, 42, 47, 48 };
-static const uint8_t ENDSTOP_PIN[N_PUMPS] = { 4, 5, 6, 7, 8 };
+static const uint8_t STEP_PIN[N_PUMPS]  = { 38, 39, 40, 41, 42 };
+static const uint8_t DIR_PIN[N_PUMPS]   = { 4, 5, 6, 7, 15 };
+static const uint8_t ENDSTOP_PIN[N_PUMPS] = { 8, 9, 10, 11, 12 };
 static const uint8_t POT_PIN[N_POTS]    = { POT_A_PIN, POT_B_PIN };
 
 // Direction each pump runs in. Inputs dispense, outputs withdraw.
@@ -232,6 +249,28 @@ static_assert(MIN_IN1_SPS > MIN_SPEED_SPS,
 
 // The single-register ISR write depends on every STEP pin living above GPIO32.
 static_assert(STEP_GPIO_BASE >= 32, "STEP pins must be in the GPIO_OUT1 bank");
+
+// Octal PSRAM (the R8 parts) claims GPIO33-37 for the SPI0/1 data lines. A pin
+// map that used them would build fine and then fight the memory bus at run
+// time, so catch it here instead. Everything except the optional SPI display
+// header stays clear of that range, which is what lets one map serve N16 and
+// N16R8 alike.
+#ifdef BOARD_HAS_PSRAM
+  #define PIN_CLEARS_PSRAM(p) ((p) < 33 || (p) > 37)
+  static_assert(PIN_CLEARS_PSRAM(EN_PIN)          &&
+                PIN_CLEARS_PSRAM(TMC_UART_A_PIN)  &&
+                PIN_CLEARS_PSRAM(TMC_UART_B_PIN)  &&
+                PIN_CLEARS_PSRAM(RUN_SWITCH_PIN)  &&
+                PIN_CLEARS_PSRAM(ESTOP_SENSE_PIN) &&
+                PIN_CLEARS_PSRAM(LED_RUN_PIN)     &&
+                PIN_CLEARS_PSRAM(LED_FAULT_PIN)   &&
+                PIN_CLEARS_PSRAM(I2C_SDA_PIN)     &&
+                PIN_CLEARS_PSRAM(I2C_SCL_PIN),
+                "pin collides with octal PSRAM (GPIO33-37) on an R8 module");
+  static_assert(PIN_CLEARS_PSRAM(STEP_GPIO_BASE) &&
+                PIN_CLEARS_PSRAM(STEP_GPIO_BASE + N_PUMPS - 1),
+                "STEP range collides with octal PSRAM (GPIO33-37)");
+#endif
 
 static_assert(POT_RAW_MIN > POT_DEADBAND,
               "POT_RAW_MIN must exceed POT_DEADBAND or 0% is unreachable");

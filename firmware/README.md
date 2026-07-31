@@ -43,6 +43,14 @@ At peak the system runs 181 steps/s - about 111 timer ticks per step. FastAccelS
 
 **STEP pins must stay above GPIO32 and contiguous.** The ISR writes `GPIO_OUT1_W1TS`/`W1TC` once for all five pumps. A `static_assert` enforces the bank; the contiguity is by convention.
 
+**The pin map avoids GPIO33-37 so it serves both N16 and N16R8.** Octal PSRAM claims that range for the SPI0/1 data lines. Only the optional SPI display header uses it, and that header is compiled out when `BOARD_HAS_PSRAM` is defined. A guarded `static_assert` fails the build if any other pin strays in there - verified by deliberately breaking it, not just written and hoped for.
+
+Build for an R8 part with:
+
+```sh
+PLATFORMIO_BUILD_FLAGS="-DBOARD_HAS_PSRAM" pio run
+```
+
 **The ISR must stay in IRAM and out of flash.** No `digitalWrite`, no `gpio_set_level`, no logging inside `ddsIsr()`. The register macros used there are volatile stores and are safe.
 
 **The platform version is pinned on purpose.** arduino-esp32 3.x renamed the entire timer API; `motion.cpp` compiles against both via `ESP_ARDUINO_VERSION_MAJOR`, but which one you build with should be a decision rather than an accident.

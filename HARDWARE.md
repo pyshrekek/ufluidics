@@ -51,7 +51,18 @@ It wins on three concrete things:
 - **Native USB deletes the CP2102N**, its crystal and its support parts. Programming and console come straight off USB-C, and DFU becomes available.
 - **ADC1 has 10 channels on GPIO1-10 and works with WiFi up.** Classic ESP32 gives you 6, overlapping the input-only pins the endstops want. That collision was the other half of the pin problem.
 
-Specify **N16, not N16R8.** The octal PSRAM variant consumes GPIO33-37, and a small single-page web UI has no use for 8 MB of PSRAM. Trading five GPIO for unused memory is the wrong way round.
+**N16 is preferred, but the firmware pin map works on either.** Octal PSRAM (the R8 parts) consumes GPIO33-37 for the SPI0/1 data lines, so `firmware/include/config.h` keeps everything except the optional SPI display header clear of that range. A `static_assert` guarded by `BOARD_HAS_PSRAM` fails the build if a pin ever strays into it, rather than letting the board fight its own memory bus at run time.
+
+What you give up on R8:
+
+| | N16 | N16R8 |
+|---|---|---|
+| Usable GPIO | 32 | 27 |
+| Pins used by this design | 26 | 26 |
+| Spare | 6 | 1 |
+| SPI display header (GPIO33-37) | Available | **Not available - use I2C** |
+
+The 8 MB of PSRAM buys nothing here. A single-page web UI is a few hundred KB, the build currently uses 5.9% of SRAM, and an ILI9341 driven by Adafruit_GFX draws directly rather than from a framebuffer. So R8 costs five GPIO and the SPI display option in exchange for memory this design does not use - but if it is what you can get, it works.
 
 RP2350B is technically the most elegant - PIO state machines are purpose-built for exactly this - but the WiFi is a separate CYW43439 die and the Arduino web stack is meaningfully less mature. Not worth it when step generation is a solved non-problem.
 
@@ -71,7 +82,7 @@ The ESP32 serves the web UI itself. Add a Pi only if you later want camera captu
 
 | Item | Part | Qty | Notes |
 |---|---|---|---|
-| MCU module | **ESP32-S3-WROOM-1-N16** | 1 | 16 MB flash, **no PSRAM** - the R8 variant costs you GPIO33-37 |
+| MCU module | **ESP32-S3-WROOM-1-N16** | 1 | 16 MB flash. N16R8 also works but costs GPIO33-37, hence the SPI display header |
 | USB-serial | **none** | 0 | ESP32-S3 has native USB. Wire D+/D- to GPIO20/19 |
 | USB connector | USB-C receptacle | 1 | 5.1k pulldowns on both CC pins |
 | Auto-reset | 2x transistor (DTR/RTS) | 1 set | Only if you also fit a serial header; native USB does not need it |
@@ -169,10 +180,10 @@ For a bench instrument you glance at while doing something else, **the 2.4" colo
 
 Fit **both headers** on the board. An I2C display header costs four pins that are already routed for the expander, and the SPI header costs five GPIO you will have spare once the expander is in place.
 
-| Header | Pins |
-|---|---|
-| I2C display | 3.3 V, GND, SDA, SCL (4.7k pullups on board) |
-| SPI display | 3.3 V, GND, SCK, MOSI, CS, DC, RST, BL |
+| Header | Pins | Availability |
+|---|---|---|
+| I2C display | 3.3 V, GND, SDA, SCL (4.7k pullups on board) | Both N16 and N16R8 |
+| SPI display | 3.3 V, GND, SCK, MOSI, CS, DC, RST, BL | **N16 only** - sits on GPIO33-37 |
 
 Drive both at **3.3 V logic**. Most OLED modules are fine; check any ILI9341 module, as some carry 5 V level shifters and some do not.
 
