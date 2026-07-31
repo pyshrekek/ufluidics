@@ -82,7 +82,7 @@ The ESP32 serves the web UI itself. Add a Pi only if you later want camera captu
 
 | Item | Part | Qty | Notes |
 |---|---|---|---|
-| MCU module | **ESP32-S3-WROOM-1-N16** | 1 | 16 MB flash. N16R8 also works but costs GPIO33-37, hence the SPI display header |
+| MCU module | **ESP32-S3-WROOM-1-N16** | 1 | 16 MB flash. N16R8 also works but costs GPIO35-37, hence the SPI display header |
 | USB-serial | **none** | 0 | ESP32-S3 has native USB. Wire D+/D- to GPIO20/19 |
 | USB connector | USB-C receptacle | 1 | 5.1k pulldowns on both CC pins |
 | Auto-reset | 2x transistor (DTR/RTS) | 1 set | Only if you also fit a serial header; native USB does not need it |
