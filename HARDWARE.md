@@ -111,8 +111,9 @@ If you later need more force, TMC5160 (SPI, external MOSFETs) is the step up. Do
 | Item | Part | Qty |
 |---|---|---|
 | Driver | TMC2209 (bare IC for integrated PCB, or SilentStepStick modules on headers) | 5 |
-| Sense resistors | 0.11 ohm 1% (if bare IC) | 10 |
-| Driver decoupling | 100 uF electrolytic + 100 nF, per driver, close to VM | 5 sets |
+| Sense resistors | 0.11 ohm 1% (bare IC only) | 10 |
+| Driver decoupling | 100 uF electrolytic + 100 nF, per driver, close to VS/VMOT | 5 sets |
+| Charge pump + regulator caps | 22 nF, 100 nF, 2.2 uF per driver (**bare IC only**) | 5 sets |
 
 Bare ICs give a cleaner board and better thermals; socketed modules let you swap a failed driver in the field. For a first spin, **socket them** - you will want to swap drivers while debugging.
 

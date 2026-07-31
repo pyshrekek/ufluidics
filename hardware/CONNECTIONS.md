@@ -82,21 +82,58 @@ Identical wiring except for STEP, DIR and the UART address straps.
 
 ### Common to all five
 
-| TMC2209 pin | Connects to | Notes |
-|---|---|---|
-| VM | +24 V | **100 uF electrolytic + 100 nF at each driver**, close to the pin |
-| GND | Ground plane | |
-| VIO | +3.3 V | Logic reference. Must be 3V3, not 5 V |
-| EN | DRV_EN net (U1 GPIO16, through the E-stop contact) | Active LOW |
-| VREF | **Depends on part - see below** | Module: leave the header pin NC, the onboard trimpot drives it. Bare IC: it is an analog input and must not float |
-| DIAG | No-Connect (or to a spare pin for StallGuard) | |
-| INDEX | No-Connect | |
-| SPREAD | GND | StealthChop; overridden over UART anyway |
-| CLK | GND | Selects the internal oscillator |
-| 1A, 1B | J-Mx pins 1, 2 | Motor coil A |
-| 2A, 2B | J-Mx pins 3, 4 | Motor coil B |
+Two very different parts share the name TMC2209. A **SilentStepStick-style module** carries the charge pump, sense resistors and regulator caps on board, so it needs almost nothing external. A **bare QFN-28** needs all of that from you.
 
-**VREF, specifically.** In UART mode the run current comes from the `IRUN`/`IHOLD` registers, not from VREF - which is why the trimpot disappears from the build procedure. That does not mean the pin can float. On a SilentStepStick-style module the onboard trimpot already forms a divider from VIO, so the header pin is genuinely a No-Connect. On a **bare TMC2209** you must drive VREF yourself; tie it to VIO and let `IRUN` scale from there. A floating analog input on a bare IC gives unpredictable current limiting.
+The pin names decide which you have: if your symbol shows `VS`, `VCP`, `CPI`, `CPO`, `5VOUT`, `BRA` and `BRB`, it is the bare IC.
+
+#### Bare TMC2209 (QFN-28)
+
+| Pin | Connects to | Required? |
+|---|---|---|
+| VS | +24 V | **Yes.** This is the motor supply. 100 nF at the pin plus 100 uF electrolytic |
+| VCP | **100 nF to VS** | **Yes.** Charge-pump buffer. Note it returns to VS, not GND |
+| CPI, CPO | **22 nF between the two pins** | **Yes.** Charge-pump flying capacitor |
+| 5VOUT | 2.2 uF X7R to GND | **Yes.** Internal LDO output; do not load it externally |
+| VCC | 5VOUT, with its own 100 nF to GND | **Yes**, if your symbol breaks it out separately |
+| VCC_IO | +3.3 V, 100 nF to GND | **Yes.** Sets the logic level. 3V3, not 5 V |
+| BRA | Sense resistor to GND, 0.11 ohm 1% | **Yes.** Bridge A current sense |
+| BRB | Sense resistor to GND, 0.11 ohm 1% | **Yes.** Bridge B current sense |
+| VREF | VCC_IO | **Yes.** Analog input, must not float. IRUN scales from it in UART mode |
+| OA1, OA2 | J-Mx pins 1, 2 | Motor coil A |
+| OB1, OB2 | J-Mx pins 3, 4 | Motor coil B |
+| EN (ENN) | DRV_EN net, active LOW | |
+| STEP, DIR | Hierarchical sheet pins | |
+| PDN_UART | Bus, through a 1k series resistor | |
+| MS1, MS2 | Strapped per instance - see the address table | |
+| SPREAD | GND | StealthChop |
+| CLK | GND | Selects the internal oscillator |
+| DIAG | No-Connect, or a spare GPIO for StallGuard | Optional |
+| INDEX | No-Connect | Optional |
+| NC | No-Connect | |
+| GND, exposed pad | Ground plane | **Yes.** Solder the EPAD with thermal vias - it is the only heat path |
+
+Leaving VS, VCP, CPI/CPO or 5VOUT open means the part does not run at all: the charge pump generates the high-side gate drive. Leaving BRA/BRB open means no current sense, which is worse than not running.
+
+**Per-driver passive count, bare IC:** 2x 0.11 ohm sense, 22 nF, 2x 100 nF, 2.2 uF, 100 nF, plus 100 nF + 100 uF on VS. About eight parts each, forty across the board. That is the real cost of bare ICs over modules - the silicon is cheaper, the BOM line count is not.
+
+Sense resistor value sets the current ceiling: 0.11 ohm gives roughly 1.4 A RMS at full scale, which is what makes the 800 mA in `TMC_RMS_CURRENT_MA` a comfortable setting rather than a stretch.
+
+#### SilentStepStick-style module
+
+| Module pin | Connects to | Notes |
+|---|---|---|
+| VMOT | +24 V | 100 uF electrolytic + 100 nF at the module |
+| GND | Ground plane | |
+| VIO / VDD | +3.3 V | Logic reference |
+| EN | DRV_EN net | Active LOW |
+| STEP, DIR | Hierarchical sheet pins | |
+| PDN_UART | Bus, through a 1k series resistor | |
+| MS1, MS2 | Strapped per instance | |
+| VREF | No-Connect | The onboard trimpot already drives it |
+| DIAG, INDEX | No-Connect | Optional |
+| 1A, 1B / 2A, 2B | J-Mx | Motor coils |
+
+Charge pump, sense resistors and regulator capacitors are all on the module. Pin *order* differs between Watterott, BigTreeTech and FYSETC even though all three claim the A4988 footprint - wire by signal name against the datasheet for the exact part.
 
 ### Per-driver
 
