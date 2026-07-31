@@ -1,0 +1,110 @@
+# ---------------------------------------------------------------------------
+# Claude Code
+# ---------------------------------------------------------------------------
+.claude/
+CLAUDE.local.md
+
+# ---------------------------------------------------------------------------
+# Editors / OS
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*~
+
+# ---------------------------------------------------------------------------
+# Arduino
+#
+# Sketches, config.h and any libraries vendored into the tree are source and
+# stay tracked. Only build output is ignored.
+# ---------------------------------------------------------------------------
+build/
+*.hex
+*.elf
+*.eep
+*.lss
+*.map
+*.o
+*.d
+*.a
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+.vscode/.browse.c_cpp.db*
+
+# ---------------------------------------------------------------------------
+# KiCad
+#
+# TRACKED (do not add these to the ignore list):
+#   *.kicad_pro  *.kicad_sch  *.kicad_pcb  *.kicad_sym  *.kicad_mod
+#   *.kicad_dru  sym-lib-table  fp-lib-table
+#
+# IGNORED below: local UI state, autosaves, backups, and everything that is
+# regenerated from the schematic or board.
+# ---------------------------------------------------------------------------
+
+# Per-user project-local state, not shared settings
+*.kicad_prl
+
+# Backups and autosaves
+*-backups/
+*.bak
+*-bak
+*.kicad_pcb-bak
+*.kicad_sch-bak
+_autosave-*
+\#auto_saved_files\#
+
+# Lock files from an open editor session
+*.lck
+
+# Regenerated library cache
+fp-info-cache
+
+# Rescue / cache libraries, regenerated on open
+*-rescue.kicad_sym
+*-rescue.lib
+*.cache.lib
+*.sch-bak
+
+# Netlists and BOM exports
+*.net
+*.xml
+*.csv
+
+# Fabrication and assembly output
+gerbers/
+gerber/
+production/
+*.gbr
+*.gbrjob
+*.gko
+*.gbl
+*.gtl
+*.gbs
+*.gts
+*.gbo
+*.gto
+*.drl
+*.xln
+*-pos.csv
+*.pos
+
+# 3D and documentation exports
+*.step
+*.stp
+*.wrl
+*.vrml
+
+# Simulation
+*.raw
+spice/
+
+# ---------------------------------------------------------------------------
+# Archives
+# ---------------------------------------------------------------------------
+*.zip
+*.tar.gz
