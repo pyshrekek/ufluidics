@@ -310,6 +310,13 @@ void setup() {
   //       so on a SilentStepStick the onboard trimpot silently overrides
   //       whatever rms_current() was asked for. Clearing it selects the
   //       internal reference and makes TMC_RMS_CURRENT_MA mean what it says.
+  //
+  //       MUST also verify every driver answered, e.g. test_connection() == 0,
+  //       and fault if not. CHOPCONF.MRES resets to 0 = 256 microsteps, so a
+  //       driver that never received its config runs at 1/256 while this code
+  //       sends 1/16-rate pulses - every pump then delivers 16x too little
+  //       flow, silently. A mis-strapped MS1/MS2 address produces exactly that,
+  //       and nothing downstream would notice.
   // TODO: WiFi (AP mode + WPA2), async web server, WebSocket telemetry at 1 Hz.
   // TODO: endstop homing on startup.
   // TODO: persist calibration in NVS via Preferences.

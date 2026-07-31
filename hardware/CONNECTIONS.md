@@ -170,6 +170,12 @@ Sense resistor value sets the current ceiling: 0.11 ohm gives roughly 1.4 A RMS 
 
 A TMC2209 takes only a 2-bit address, so one bus reaches four drivers. That is the entire reason for the second bus - U6 is alone on it and can keep address 0.
 
+**MS1/MS2 are not microstepping select.** That is their standalone-mode role. Once PDN_UART is used for UART they become the address, and microstepping moves to `CHOPCONF.MRES` in software. So the four drivers on bus A must be strapped *differently* - identical straps collide the bus.
+
+**Maximum resolution does not come from these pins.** The firmware commands 1/16 and enables MicroPlyer, which interpolates to 256 microsteps inside the driver: the motor sees 1/256 motion while the step rate stays at 181 steps/s peak. Commanding 1/256 natively would give identical smoothness at 2894 steps/s - 16x the interrupt load and EMI for nothing. Interpolation is also at its best here, since MicroPlyer predicts from the last step interval and this system only ever runs at constant velocity.
+
+> **Verify the UART config at startup.** `CHOPCONF.MRES` resets to 0, which is 256 microsteps. A driver that never received its configuration therefore runs at 1/256 while the firmware sends 1/16-rate pulses, delivering **16x too little flow** with nothing reporting a fault. A mis-strapped address does this. Check `test_connection()` on every driver and fault the system if any does not answer.
+
 > **Validate the single-wire UART early.** One GPIO per bus relies on the ESP32 GPIO matrix mapping both U*TXD and U*RXD onto the same pad. It is used successfully in ESP32 Marlin builds, but prove it on a devkit before committing copper. If it does not behave, the fallback is separate TX and RX per bus - two extra pins, which N16 has spare and **R8 does not**.
 
 ---
