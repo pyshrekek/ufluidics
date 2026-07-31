@@ -45,36 +45,6 @@ Two builds coexist deliberately: the Mega rig stays working while the ESP32 boar
 
 The three KiCad files must also keep a shared basename - that is a KiCad requirement, not a convention. Rename all three together or none.
 
-## Dependency
-
-**AccelStepper** by Mike McCauley.
-Arduino IDE: `Tools > Manage Libraries`, search "AccelStepper", install.
-
-Used in constant-speed mode only.
-`runSpeed()` is polled for all five pumps on every loop pass and no acceleration ramp is configured, because steady volumetric flow is the whole point and a ramp would corrupt the mass balance every time a pot moved.
-
-## Repository layout
-
-```
-ufluidics/              <- must keep this directory name, see below
-  ufluidics.ino         firmware: stepper setup, state machine, flow math, telemetry
-  config.h              every tunable constant, plus compile-time sanity checks
-  README.md             this file - wiring, calibration, verification
-  HARDWARE.md           PCB spec for the ESP32-S3 revision with a web interface
-  hardware/             KiCad project
-    ufluidics.kicad_pro
-    ufluidics.kicad_sch
-    ufluidics.kicad_pcb
-```
-
-**The top-level directory name matters.** The Arduino IDE requires a sketch folder to be named exactly after its `.ino` file, so cloning this repo as anything other than `ufluidics` will make the IDE refuse to open it:
-
-```sh
-git clone <url> ufluidics
-```
-
-The three KiCad files must also keep a shared basename - that is a KiCad requirement, not a convention. Rename all three together or none.
-
 ## Configuration at a glance
 
 At 1/16 microstepping with a 2 mm lead screw and a 14.5 mm syringe bore:
