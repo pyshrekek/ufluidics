@@ -2,7 +2,7 @@
 
 Target: a single board carrying five stepper drivers, an MCU, and a web interface, replacing the Mega + A4988 breakout build.
 
-KiCad project lives in `hardware/`.
+KiCad project lives in `hardware/`. Net-by-net wiring is in [hardware/CONNECTIONS.md](hardware/CONNECTIONS.md).
 
 ## MCU selection
 
@@ -86,7 +86,8 @@ The ESP32 serves the web UI itself. Add a Pi only if you later want camera captu
 | USB-serial | **none** | 0 | ESP32-S3 has native USB. Wire D+/D- to GPIO20/19 |
 | USB connector | USB-C receptacle | 1 | 5.1k pulldowns on both CC pins |
 | Auto-reset | 2x transistor (DTR/RTS) | 1 set | Only if you also fit a serial header; native USB does not need it |
-| Boot/reset buttons | Tactile SMD | 2 | |
+| Boot/reset buttons | Tactile SMD | 2 | GPIO0 needs 10k to 3V3; EN needs 10k + 100 nF |
+| Crystal / oscillator | **none** | 0 | 40 MHz crystal, flash and RF matching are inside the module |
 
 ### Stepper drivers
 
@@ -219,6 +220,34 @@ Two notes that apply either way:
 Classic ESP32-WROOM has 19 output-capable GPIO plus 4 input-only (GPIO6-11 are flash, 34-39 are input-only, 0/2/12/15 are strapping). Motion alone takes 15, leaving 4 output-capable and 4 input-only - and the pots need ADC1 on GPIO32-39, colliding with the pins the endstops want.
 
 That is why the classic part needs an **MCP23017 I2C expander** (~$1.50) to absorb the endstops, switches and LEDs. It works fine; it is simply a problem the S3 does not have.
+
+## Unused pins on the schematic
+
+Seven module GPIOs go unused by this design. They do not all get the same treatment.
+
+| Pin | Handling |
+|---|---|
+| **GPIO0** | **Not a No-Connect.** 10k pullup to 3V3 plus a button to GND - it is the boot strap, and NC-ing it means no download mode |
+| GPIO3 | No-Connect. JTAG source select; floating is fine |
+| GPIO45 | No-Connect. VDD_SPI select, internal pulldown holds it LOW, which is what a 3.3 V flash needs |
+| GPIO46 | No-Connect. Boot strap, internal pulldown holds it LOW |
+| GPIO35, 36, 37 | See below - this is a decision, not a default |
+
+KiCad's No-Connect flag is an ERC annotation, not a physical statement. It creates no copper and no net; it only suppresses the "pin not connected" warning so real omissions still surface.
+
+### GPIO35/36/37: the variant decision
+
+These are the only spare pins on an N16, and exactly the pins octal PSRAM claims on an R8. Three options:
+
+| Approach | N16 | N16R8 | SPI display |
+|---|---|---|---|
+| No-Connect all three | Safe | Safe | **Foreclosed** |
+| Route to the SPI display header | Works | **Hardware fault** | Available |
+| **0 ohm series jumpers to the header** | Populate | Leave DNP | **Available on N16** |
+
+**Do not route them and then fit an R8 module.** Those pads are bonded to the PSRAM die on that part, so external circuitry is bus contention rather than a merely wasted pin, and it can damage the module.
+
+The series-jumper approach is the recommended one: three cheap parts turn the module variant into a BOM line instead of a board respin. Note that it means the pins are genuinely connected, so they get no NC flags - ERC reads the schematic, not the populate list.
 
 ## ESP32-S3 gotchas that must be designed around
 
