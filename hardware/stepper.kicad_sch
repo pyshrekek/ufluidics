@@ -553,6 +553,399 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "power:+24V"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "+24V"
+				(at 0 3.556 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"+24V\""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "global power"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "+24V_0_1"
+				(polyline
+					(pts
+						(xy -0.762 1.27) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 2.54) (xy 0.762 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "+24V_1_1"
+				(pin power_in line
+					(at 0 0 90)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "power:+3V3"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "+3V3"
+				(at 0 3.556 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"+3V3\""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "global power"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "+3V3_0_1"
+				(polyline
+					(pts
+						(xy -0.762 1.27) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 2.54) (xy 0.762 1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 2.54)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "+3V3_1_1"
+				(pin power_in line
+					(at 0 0 90)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "power:GND"
+			(power global)
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#PWR"
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "GND"
+				(at 0 -3.81 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "global power"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "GND_0_1"
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 -1.27) (xy 1.27 -1.27) (xy 0 -2.54) (xy -1.27 -1.27) (xy 0 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "GND_1_1"
+				(pin power_in line
+					(at 0 0 270)
+					(length 0)
+					(name ""
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 	)
 	(text "VMOT\nGND\nA2\nA1\nB1\nB2\nVDD\nGND"
 		(exclude_from_sim no)
@@ -565,7 +958,7 @@
 		)
 		(uuid "425a1b27-2531-4b88-9c75-fc6935e91b94")
 	)
-	(text "EN\nMS1\nMS2\nPDN\nPDN\nCLK\nSTEP\nDIR"
+	(text "EN\nMS1\nMS2\nRX\nTX\nCLK\nSTEP\nDIR"
 		(exclude_from_sim no)
 		(at 103.632 80.264 0)
 		(effects
@@ -576,9 +969,13 @@
 		)
 		(uuid "603f25e7-f4d0-449f-8c6e-30f5acabf4bb")
 	)
+	(no_connect
+		(at 96.52 81.28)
+		(uuid "b9091b04-83f5-4174-9938-31979aa41e93")
+	)
 	(wire
 		(pts
-			(xy 133.35 76.2) (xy 125.73 76.2)
+			(xy 128.27 76.2) (xy 125.73 76.2)
 		)
 		(stroke
 			(width 0)
@@ -588,7 +985,17 @@
 	)
 	(wire
 		(pts
-			(xy 133.35 81.28) (xy 125.73 81.28)
+			(xy 128.27 88.9) (xy 125.73 88.9)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "22443ccd-f0ec-4981-b551-0e7309801a36")
+	)
+	(wire
+		(pts
+			(xy 128.27 81.28) (xy 125.73 81.28)
 		)
 		(stroke
 			(width 0)
@@ -598,7 +1005,37 @@
 	)
 	(wire
 		(pts
-			(xy 133.35 83.82) (xy 125.73 83.82)
+			(xy 135.89 71.12) (xy 125.73 71.12)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "54a04400-8613-40d9-9a03-8a5fbb9b0291")
+	)
+	(wire
+		(pts
+			(xy 87.63 83.82) (xy 96.52 83.82)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5f67deac-2561-486a-bc79-6331cd6d763d")
+	)
+	(wire
+		(pts
+			(xy 152.4 86.36) (xy 125.73 86.36)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8e9f8292-ac9b-4ef7-b269-1995cc75ded8")
+	)
+	(wire
+		(pts
+			(xy 128.27 83.82) (xy 125.73 83.82)
 		)
 		(stroke
 			(width 0)
@@ -608,13 +1045,23 @@
 	)
 	(wire
 		(pts
-			(xy 133.35 78.74) (xy 125.73 78.74)
+			(xy 128.27 78.74) (xy 125.73 78.74)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "e010d8c2-ee3d-41f7-971e-075a19e28aba")
+	)
+	(wire
+		(pts
+			(xy 125.73 73.66) (xy 148.59 73.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e1cccd83-04a8-4654-bb60-068c31ad0590")
 	)
 	(global_label "DRIVER_EN"
 		(shape input)
@@ -639,6 +1086,61 @@
 				(justify right)
 			)
 		)
+	)
+	(hierarchical_label "MS2"
+		(shape input)
+		(at 96.52 76.2 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "3f85a6bc-817b-4117-9f72-eda80ec06d2a")
+	)
+	(hierarchical_label "UART"
+		(shape input)
+		(at 96.52 78.74 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "437cdc7d-a925-4ffb-9671-b6b3287003d0")
+	)
+	(hierarchical_label "DIR"
+		(shape input)
+		(at 96.52 88.9 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "6ffc3b4f-7548-4f59-b2e9-684dc72847e4")
+	)
+	(hierarchical_label "STEP"
+		(shape input)
+		(at 96.52 86.36 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "775f21ed-8ec9-4c78-a241-652675f0c2f6")
+	)
+	(hierarchical_label "MS1"
+		(shape input)
+		(at 96.52 73.66 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "c4c66b1d-5dc7-428c-b464-786dbd28a42c")
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x08")
@@ -673,7 +1175,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical"
 			(at 101.6 78.74 0)
 			(hide yes)
 			(show_name no)
@@ -707,33 +1209,49 @@
 			)
 		)
 		(pin "8"
-			(uuid "81725431-1e31-4e22-b846-815f3c69ca7a")
+			(uuid "ed705ed1-cc59-4a1b-9ba5-5c46a55e90d7")
 		)
 		(pin "5"
-			(uuid "87577363-617d-468f-817f-266ee19e2ef8")
+			(uuid "15c4ee4f-8564-40e9-9ddb-14f35adddb68")
 		)
 		(pin "1"
-			(uuid "a38436c3-3bb4-4bdb-9e7e-dc4e1922249d")
+			(uuid "6c38c20d-e8a5-449d-8ff1-776ed3cc2c72")
 		)
 		(pin "6"
-			(uuid "9eadbc88-81c3-437c-875e-4c8463eb0ef5")
+			(uuid "adcf02ee-af78-4196-9c88-a19485f5ee1d")
 		)
 		(pin "2"
-			(uuid "56edbb42-ca72-4693-a0c2-a77fae0ac960")
+			(uuid "0b931fb7-7670-430c-8ed7-8a9819a6c821")
 		)
 		(pin "7"
-			(uuid "1baaff56-a30c-43ce-977a-2457a9868ffa")
+			(uuid "0ccce125-d28f-4c78-a71b-f3509bfd03c5")
 		)
 		(pin "4"
-			(uuid "24a682e4-6013-49d2-b12f-934fe471ff54")
+			(uuid "1a4ab162-0e0a-4469-a266-52ecf8373cf3")
 		)
 		(pin "3"
-			(uuid "0157ea57-3e6f-4ce2-9314-33a5d02d0d7c")
+			(uuid "92ae1fc3-eaff-4425-924f-91dc22ffdaf6")
 		)
 		(instances
 			(project "ufluidics"
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/0490ac22-4186-4de0-867f-92f23bb002cb"
+					(reference "J7")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/3dcc8c7c-7b82-4ea2-a1ed-aae4ec1cfffa"
+					(reference "J13")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/864cedd2-718f-4cca-b038-6c3e6245f1a2"
+					(reference "J10")
+					(unit 1)
+				)
 				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/c869babf-cbcf-4a53-91eb-8705d939d0f5"
 					(reference "J1")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/e1c4a126-6ec3-4200-a557-ebfb82816ed4"
+					(reference "J4")
 					(unit 1)
 				)
 			)
@@ -741,7 +1259,7 @@
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x04")
-		(at 138.43 78.74 0)
+		(at 133.35 78.74 0)
 		(unit 1)
 		(body_style 1)
 		(exclude_from_sim no)
@@ -752,7 +1270,7 @@
 		(fields_autoplaced yes)
 		(uuid "479dad8d-948b-4a98-a572-96386b71dcb0")
 		(property "Reference" "J3"
-			(at 140.97 78.7399 0)
+			(at 135.89 78.7399 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -763,7 +1281,7 @@
 			)
 		)
 		(property "Value" "Conn_01x04"
-			(at 140.97 81.2799 0)
+			(at 135.89 81.2799 0)
 			(show_name no)
 			(do_not_autoplace no)
 			(effects
@@ -773,8 +1291,8 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
-			(at 138.43 78.74 0)
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical"
+			(at 133.35 78.74 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -785,7 +1303,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 138.43 78.74 0)
+			(at 133.35 78.74 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -796,7 +1314,7 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 138.43 78.74 0)
+			(at 133.35 78.74 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -807,21 +1325,507 @@
 			)
 		)
 		(pin "3"
-			(uuid "fe612ec8-43db-408c-9faf-1fef574d5698")
+			(uuid "15718d7b-0b15-4319-a2b0-05926d8e76b4")
 		)
 		(pin "1"
-			(uuid "5caeec45-3432-44ed-a7e6-f5ce7264aa1e")
+			(uuid "312e425e-e070-4ec0-a668-662ae2e4f36a")
 		)
 		(pin "2"
-			(uuid "cd838f49-9b1b-4037-9df0-b967f91a55a5")
+			(uuid "aa2c1bed-dca4-4f7f-b38c-d62620901779")
 		)
 		(pin "4"
-			(uuid "2e6eaf2a-9d50-4f8c-b0e4-5810df021db9")
+			(uuid "d4f9115a-c4eb-4b1c-a6dd-ec0d094d5a9d")
 		)
 		(instances
 			(project "ufluidics"
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/0490ac22-4186-4de0-867f-92f23bb002cb"
+					(reference "J9")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/3dcc8c7c-7b82-4ea2-a1ed-aae4ec1cfffa"
+					(reference "J15")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/864cedd2-718f-4cca-b038-6c3e6245f1a2"
+					(reference "J12")
+					(unit 1)
+				)
 				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/c869babf-cbcf-4a53-91eb-8705d939d0f5"
 					(reference "J3")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/e1c4a126-6ec3-4200-a557-ebfb82816ed4"
+					(reference "J6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 128.27 88.9 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "49ca02b5-b5b1-400d-ad5d-29cd5fa133e7")
+		(property "Reference" "#PWR03"
+			(at 128.27 95.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 128.27 93.98 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 128.27 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 128.27 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 128.27 88.9 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "705a2cd9-c159-401a-a573-34a73098308c")
+		)
+		(instances
+			(project "ufluidics"
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/0490ac22-4186-4de0-867f-92f23bb002cb"
+					(reference "#PWR014")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/3dcc8c7c-7b82-4ea2-a1ed-aae4ec1cfffa"
+					(reference "#PWR024")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/864cedd2-718f-4cca-b038-6c3e6245f1a2"
+					(reference "#PWR019")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/c869babf-cbcf-4a53-91eb-8705d939d0f5"
+					(reference "#PWR03")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/e1c4a126-6ec3-4200-a557-ebfb82816ed4"
+					(reference "#PWR09")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 148.59 73.66 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "4a275111-c573-428e-9d0c-a0f614d6e431")
+		(property "Reference" "#PWR05"
+			(at 148.59 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 148.59 78.74 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 148.59 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 148.59 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 148.59 73.66 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "2f9f2741-1810-4f38-98d3-9fb075db1a25")
+		)
+		(instances
+			(project "ufluidics"
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/0490ac22-4186-4de0-867f-92f23bb002cb"
+					(reference "#PWR016")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/3dcc8c7c-7b82-4ea2-a1ed-aae4ec1cfffa"
+					(reference "#PWR026")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/864cedd2-718f-4cca-b038-6c3e6245f1a2"
+					(reference "#PWR021")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/c869babf-cbcf-4a53-91eb-8705d939d0f5"
+					(reference "#PWR05")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/e1c4a126-6ec3-4200-a557-ebfb82816ed4"
+					(reference "#PWR011")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 87.63 83.82 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "869d5912-2fc7-47f6-801c-96b4e8bead39")
+		(property "Reference" "#PWR07"
+			(at 87.63 90.17 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "GND"
+			(at 87.63 88.9 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 87.63 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 87.63 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 87.63 83.82 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "ab34a781-9c59-4326-8d0c-da5d7942e8d9")
+		)
+		(instances
+			(project "ufluidics"
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/0490ac22-4186-4de0-867f-92f23bb002cb"
+					(reference "#PWR013")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/3dcc8c7c-7b82-4ea2-a1ed-aae4ec1cfffa"
+					(reference "#PWR023")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/864cedd2-718f-4cca-b038-6c3e6245f1a2"
+					(reference "#PWR018")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/c869babf-cbcf-4a53-91eb-8705d939d0f5"
+					(reference "#PWR07")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/e1c4a126-6ec3-4200-a557-ebfb82816ed4"
+					(reference "#PWR08")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+3V3")
+		(at 152.4 86.36 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "9af84f68-dfd0-4f0c-bd62-eef2edbd08ff")
+		(property "Reference" "#PWR06"
+			(at 152.4 90.17 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+3V3"
+			(at 152.4 81.28 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 152.4 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 152.4 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3V3\""
+			(at 152.4 86.36 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "9e51c324-23b4-45bb-952f-1ce461ca169f")
+		)
+		(instances
+			(project "ufluidics"
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/0490ac22-4186-4de0-867f-92f23bb002cb"
+					(reference "#PWR017")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/3dcc8c7c-7b82-4ea2-a1ed-aae4ec1cfffa"
+					(reference "#PWR027")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/864cedd2-718f-4cca-b038-6c3e6245f1a2"
+					(reference "#PWR022")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/c869babf-cbcf-4a53-91eb-8705d939d0f5"
+					(reference "#PWR06")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/e1c4a126-6ec3-4200-a557-ebfb82816ed4"
+					(reference "#PWR012")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+24V")
+		(at 135.89 71.12 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "c9eb1170-b8cc-46d7-80f3-02fdd6adbafc")
+		(property "Reference" "#PWR04"
+			(at 135.89 74.93 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "+24V"
+			(at 135.89 66.04 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 135.89 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 135.89 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+24V\""
+			(at 135.89 71.12 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "820ddf09-5bfa-4dc8-8dc0-aa9d06bd926d")
+		)
+		(instances
+			(project "ufluidics"
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/0490ac22-4186-4de0-867f-92f23bb002cb"
+					(reference "#PWR015")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/3dcc8c7c-7b82-4ea2-a1ed-aae4ec1cfffa"
+					(reference "#PWR025")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/864cedd2-718f-4cca-b038-6c3e6245f1a2"
+					(reference "#PWR020")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/c869babf-cbcf-4a53-91eb-8705d939d0f5"
+					(reference "#PWR04")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/e1c4a126-6ec3-4200-a557-ebfb82816ed4"
+					(reference "#PWR010")
 					(unit 1)
 				)
 			)
@@ -859,7 +1863,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinSocket_2.54mm:PinSocket_1x08_P2.54mm_Vertical"
 			(at 120.65 81.28 0)
 			(hide yes)
 			(show_name no)
@@ -893,33 +1897,49 @@
 			)
 		)
 		(pin "8"
-			(uuid "da9f5118-d0ca-4dbe-b383-20e0226d71e0")
+			(uuid "b6566477-0aa8-43d0-adcf-2521e1da054e")
 		)
 		(pin "5"
-			(uuid "a6e45a19-96bf-4933-bce9-61380a4527e1")
+			(uuid "c44e4d86-ab4e-4c5b-bf68-846d59e49df9")
 		)
 		(pin "1"
-			(uuid "78371968-b4cc-426f-9ed6-bb7bd9aee00e")
+			(uuid "41327e09-1f1d-4afd-8922-2b270a75647f")
 		)
 		(pin "6"
-			(uuid "cdebe05e-e69c-43a6-8b62-be3d1c4f4832")
+			(uuid "d64085d4-6e8f-4a7f-b57d-c4d94a8a24f9")
 		)
 		(pin "2"
-			(uuid "16fb1848-0c44-4eac-98ee-7c658403fcc9")
+			(uuid "8d5ffb70-e780-4a1b-b655-6195b9601cb1")
 		)
 		(pin "7"
-			(uuid "44831917-1ab3-48a5-bc82-8e4a3dc97c9a")
+			(uuid "8e3a4044-ef96-436f-a93e-54f430c02798")
 		)
 		(pin "4"
-			(uuid "121e3dd4-8d84-4161-929a-b436ed4dcb8b")
+			(uuid "76344d48-36b1-4e32-b387-310b10a7ffda")
 		)
 		(pin "3"
-			(uuid "74502483-7fd7-4bae-9760-ef2a93dce763")
+			(uuid "fb48d7e0-210d-472f-b25c-17b32f9af91c")
 		)
 		(instances
 			(project "ufluidics"
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/0490ac22-4186-4de0-867f-92f23bb002cb"
+					(reference "J8")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/3dcc8c7c-7b82-4ea2-a1ed-aae4ec1cfffa"
+					(reference "J14")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/864cedd2-718f-4cca-b038-6c3e6245f1a2"
+					(reference "J11")
+					(unit 1)
+				)
 				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/c869babf-cbcf-4a53-91eb-8705d939d0f5"
 					(reference "J2")
+					(unit 1)
+				)
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0/e1c4a126-6ec3-4200-a557-ebfb82816ed4"
+					(reference "J5")
 					(unit 1)
 				)
 			)

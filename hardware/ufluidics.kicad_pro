@@ -416,7 +416,7 @@
         "uuid": "bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0"
       }
     ],
-    "used_designators": "J1,#PWR1-3,U1-2",
+    "used_designators": "J1,J4-15,#PWR1-27,U1-2",
     "variants": []
   },
   "sheets": [
@@ -431,6 +431,22 @@
     [
       "c869babf-cbcf-4a53-91eb-8705d939d0f5",
       "stepper"
+    ],
+    [
+      "e1c4a126-6ec3-4200-a557-ebfb82816ed4",
+      "stepper1"
+    ],
+    [
+      "0490ac22-4186-4de0-867f-92f23bb002cb",
+      "stepper2"
+    ],
+    [
+      "864cedd2-718f-4cca-b038-6c3e6245f1a2",
+      "stepper3"
+    ],
+    [
+      "3dcc8c7c-7b82-4ea2-a1ed-aae4ec1cfffa",
+      "stepper4"
     ]
   ],
   "text_variables": {},

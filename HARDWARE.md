@@ -110,7 +110,7 @@ If you later need more force, TMC5160 (SPI, external MOSFETs) is the step up. Do
 
 | Item | Part | Qty |
 |---|---|---|
-| Driver | TMC2209 (bare IC for integrated PCB, or SilentStepStick modules on headers) | 5 |
+| Driver | **BigTreeTech TMC2209 V1.2/V1.3** module, socketed | 5 |
 | Driver sockets | 2x8 female header, 0.1 in, per driver | 10 |
 | Driver decoupling | 100 uF electrolytic + 100 nF, per driver, close to VS/VMOT | 5 sets |
 

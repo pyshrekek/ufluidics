@@ -95,7 +95,7 @@ The pin names decide which you have: if your symbol shows `VS`, `VCP`, `CPI`, `C
 | VIO / VDD | **+3.3 V** | Logic reference, not the operating supply - see below |
 | EN | DRV_EN net | Active LOW |
 | STEP, DIR | Hierarchical sheet pins | |
-| PDN_UART | Bus, through 1k | **Measure first** if the module has two PDN pads - the resistor may already be on-board |
+| PDN_UART | Bus, directly (BTT) | BTT Pin 4; the 1k is on the module. Pin 5 stays NC |
 | MS1, MS2 | Strapped per instance | |
 | VREF | No-Connect | The onboard trimpot already drives it |
 | DIAG, INDEX | No-Connect | Optional |
@@ -107,38 +107,22 @@ Footprint: the standard 2x8 0.1 in StepStick outline, `Module:Pololu_Breakout-16
 
 **Pin order differs between Watterott, BigTreeTech and FYSETC** even though all three claim the A4988 footprint. Once you socket them, the board is committed to whichever pinout you route - pick the exact part first and wire by signal name against its datasheet.
 
-##### Two PDN pads: measure before routing
+##### Two PDN pads (BigTreeTech TMC2209 V1.2/V1.3)
 
-The TMC2209 die has exactly one PDN_UART pin, but that does **not** mean two module pads are the same net. Many modules put the 1k on-board and break the single die pin out as two pads:
+The two pads are **not** TX and RX. They are two alternative positions for the same single-wire PDN_UART line, and an on-board 1k resistor selects which one is live.
 
-```
-   PAD_TX --[1k on module]--+-- PDN_UART (die)
-                            |
-   PAD_RX ------------------+
-```
+From BigTreeTech's own documentation: *"The factory has connected the UART Pin to the fourth Pin, namely the PDN_UART Pin... If the fifth Pin is used as the UART Pin, the resistance shall be removed and welded to the following two pads."*
 
-That is the standard TMC2209 UART arrangement pre-built: the host drives through the resistor, the host receives from the pin directly, so the driver's output can win against an idle-high host line.
+| Pad | Wiring |
+|---|---|
+| **Pin 4** (PDN_UART) | To the UART bus. Factory default, nothing to modify |
+| **Pin 5** | **No-Connect** - physically open on the module unless you relocate the resistor |
 
-**An ohmmeter between the two pads settles it in ten seconds:**
+**Do not add an external 1k series resistor.** BigTreeTech already fitted it; another in series makes 2k. This differs from a bare TMC2209 or some other vendors' modules, where the resistor is the host board's job.
 
-| Reading | Meaning | Wiring |
-|---|---|---|
-| ~0 ohm | Duplicated pinout for host compatibility | One pad through an **external 1k** to the bus, other No-Connect |
-| ~1 kohm | Split TX/RX, resistor already on the module | **No external resistor.** See below |
+Klipper drives these with a single `uart_pin`, which confirms single-wire half-duplex operation - so one GPIO per bus is correct and the pin budget is unchanged.
 
-If it is the split case, two options:
-
-- **Keep one GPIO per bus.** Connect only the resistor-side pad, leave the other NC. The GPIO then drives and reads through the module's own 1k, which is the single-wire arrangement with the resistor supplied. Identify that pad by measuring each to the die's PDN pin - resistor side reads ~1k, RX side ~0.
-- **Use both pads.** Host TX to one, RX to the other, two GPIO per bus. Safer if single-wire proves unreliable.
-
-**The second option changes the pin budget**, so decide before layout:
-
-| | Pins | N16 (4 spare) | N16R8 (1 spare) |
-|---|---|---|---|
-| Single-wire | 2 | Fits | Fits |
-| Split TX/RX | 4 | Fits, but consumes 2 of GPIO35/36/37 - **loses the SPI display** | **Does not fit** |
-
-Never stack an external 1k on top of an on-board one; 2k total is out of spec for the line.
+> If you switch to a different vendor's module, re-check this. Watterott SilentStepSticks and bare ICs do **not** carry the resistor, and some modules genuinely do split TX and RX. An ohmmeter between the pads tells you which you have: ~0 ohm means duplicated pinout, ~1k means the resistor sits between them.
 
 ##### CLK
 
@@ -182,7 +166,7 @@ Do not tie VIO to the module's `5VOUT` pin either, where one is exposed; that is
 | OB1, OB2 | J-Mx pins 3, 4 | Motor coil B |
 | EN (ENN) | DRV_EN net, active LOW | |
 | STEP, DIR | Hierarchical sheet pins | |
-| PDN_UART | Bus, through 1k | **Measure first** if the module has two PDN pads - the resistor may already be on-board |
+| PDN_UART | Bus, directly (BTT) | BTT Pin 4; the 1k is on the module. Pin 5 stays NC |
 | MS1, MS2 | Strapped per instance - see the address table | |
 | SPREAD | GND | StealthChop |
 | CLK | GND | Selects the internal oscillator. Never leave floating |
@@ -207,7 +191,7 @@ Sense resistor value sets the current ceiling: 0.11 ohm gives roughly 1.4 A RMS 
 | U5 | OUT2 | GPIO41 | GPIO7 | TMC_UART_A | VIO | VIO | 3 |
 | U6 | OUT3 | GPIO42 | GPIO15 | TMC_UART_B (GPIO18) | GND | GND | 0 |
 
-**Every PDN_UART needs its own 1k series resistor** to the shared bus line - but check whether your module already provides it. See the two-pad note above.
+**On BigTreeTech modules the 1k series resistor is already fitted** - wire Pin 4 straight to the bus and add nothing. Bare ICs and some other vendors' modules need an external 1k per driver. See the two-pad note above.
 
 A TMC2209 takes only a 2-bit address, so one bus reaches four drivers. That is the entire reason for the second bus - U6 is alone on it and can keep address 0.
 
