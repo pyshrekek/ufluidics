@@ -416,7 +416,7 @@
         "uuid": "bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0"
       }
     ],
-    "used_designators": "R1,C1,D1,#PWR1-34,J1,J4-15,P1,U1-3",
+    "used_designators": "#FLG1-3,SW_BOOT1,Cout2,F1,Cinx1,C1-5,C8-19,U1-3,U5,SW1,J_LED_PWR1,Q1,D1-8,#PWR1-34,#PWR38-42,#PWR44-69,#PWR71-76,Cin1-3,J1,J4-21,SW_RST1,R1-11,P1,J_LED_RUN1,J_LED_FAULT1",
     "variants": []
   },
   "sheets": [
@@ -430,27 +430,39 @@
     ],
     [
       "c869babf-cbcf-4a53-91eb-8705d939d0f5",
-      "stepper"
+      "stepper_IN1"
     ],
     [
       "e1c4a126-6ec3-4200-a557-ebfb82816ed4",
-      "stepper1"
+      "stepper_IN2"
     ],
     [
       "0490ac22-4186-4de0-867f-92f23bb002cb",
-      "stepper2"
+      "stepper_OUT1"
     ],
     [
       "864cedd2-718f-4cca-b038-6c3e6245f1a2",
-      "stepper3"
+      "stepper_OUT2"
     ],
     [
       "3dcc8c7c-7b82-4ea2-a1ed-aae4ec1cfffa",
-      "stepper4"
+      "stepper_OUT3"
     ],
     [
       "2d60a5db-c1d2-4142-924d-8a10382c57fd",
       "usb"
+    ],
+    [
+      "a3df6529-51d8-40b0-b7cf-bc59b751006a",
+      "endstops"
+    ],
+    [
+      "63e3e65d-881a-4b31-9268-e147884c236b",
+      "leds"
+    ],
+    [
+      "8b089c51-0759-4118-8d10-143aabcd40f1",
+      "pots"
     ]
   ],
   "text_variables": {},

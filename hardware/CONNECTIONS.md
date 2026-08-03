@@ -2,6 +2,8 @@
 
 Net-by-net wiring for the ESP32-S3 board. Every MCU pin here is derived from `firmware/include/config.h` - if you change a pin there, change it here, and vice versa. The `static_assert`s in that file will catch a pin that does not exist on the module, but nothing will catch this document drifting out of date.
 
+This file describes the intended design. For where the schematic currently departs from it, see [OPEN-ISSUES.md](OPEN-ISSUES.md).
+
 Reference designators used below:
 
 | Ref | Part |
@@ -18,7 +20,9 @@ Reference designators used below:
 | J-RUN | RUN switch, JST-XH 2-pin |
 | J-ESTOP | E-stop, JST-XH 4-pin |
 | J-DISP | I2C display, 4-pin |
-| J-TFT | SPI display, 8-pin (N16 only) |
+| J-TFT | SPI display, 9-pin (N16 only) |
+| J-DBG | UART0 serial console, 3-pin 0.1 in header |
+| D-RUN / D-FAULT / D-PWR | Status LEDs, 0805 |
 
 ---
 
@@ -28,7 +32,7 @@ Reference designators used below:
 |---|---|---|---|---|
 | 1, 40, 41 | GND | Ground | Ground plane. **Pad 41 is the EPAD** - thermal vias | - |
 | 2 | +3V3 | Logic supply | 3.3 V rail, 22 uF + 100 nF at the pad | - |
-| 3 | ~RESET | Chip enable | 10k to 3V3, 100 nF to GND, SW-RST to GND | in |
+| 3 | ~RESET | Chip enable | 10k to 3V3, **1 uF** to GND, SW-RST to GND | in |
 | 4 | GPIO4 | DIR IN1 | U2 TMC2209 DIR | out |
 | 5 | GPIO5 | DIR IN2 | U3 TMC2209 DIR | out |
 | 6 | GPIO6 | DIR OUT1 | U4 TMC2209 DIR | out |
@@ -41,7 +45,7 @@ Reference designators used below:
 | 13 | GPIO19 | USB_D- | USB-C D- (CC 5k1 each) | bidir |
 | 14 | GPIO20 | USB_D+ | USB-C D+ | bidir |
 | 15 | GPIO3 | unused | No-Connect | - |
-| 16 | GPIO46 | unused (boot strap) | No-Connect, internal pulldown | - |
+| 16 | GPIO46 | LED_FAULT | D-FAULT anode, 1k | out |
 | 17 | GPIO9 | ENDSTOP IN2 | J-ES2 pin 2 | in, pullup |
 | 18 | GPIO10 | ENDSTOP OUT1 | J-ES3 pin 2 | in, pullup |
 | 19 | GPIO11 | ENDSTOP OUT2 | J-ES4 pin 2 | in, pullup |
@@ -51,7 +55,7 @@ Reference designators used below:
 | 23 | GPIO21 | I2C_SCL | J-DISP pin 4, 4k7 to 3V3 | bidir |
 | 24 | GPIO47 | I2C_SDA | J-DISP pin 3, 4k7 to 3V3 | bidir |
 | 25 | GPIO48 | TFT_DC | J-TFT pin 6 | out |
-| 26 | GPIO45 | unused (VDD_SPI strap) | No-Connect, internal pulldown | - |
+| 26 | GPIO45 | LED_RUN | D-RUN anode, 1k | out |
 | 27 | GPIO0 | BOOT strap | 10k to 3V3 + SW-BOOT to GND | in |
 | 28 | GPIO35 | TFT_SCK  (N16 only) | J-TFT pin 3, via 0R jumper | out |
 | 29 | GPIO36 | TFT_MOSI (N16 only) | J-TFT pin 4, via 0R jumper | out |
@@ -61,12 +65,51 @@ Reference designators used below:
 | 33 | GPIO40 | STEP OUT1 | U4 TMC2209 STEP | out |
 | 34 | GPIO41 | STEP OUT2 | U5 TMC2209 STEP | out |
 | 35 | GPIO42 | STEP OUT3 | U6 TMC2209 STEP | out |
-| 36 | GPIO44 | LED_FAULT | D-FAULT anode, 1k | out |
-| 37 | GPIO43 | LED_RUN | D-RUN anode, 1k | out |
+| 36 | GPIO44 | UART0_RX (spare) | J-DBG pin 3 | in |
+| 37 | GPIO43 | UART0_TX (spare) | J-DBG pin 2 | out |
 | 38 | GPIO2 | POT_B (ADC1_CH1) | J-POT-B wiper | analog in |
 | 39 | GPIO1 | POT_A (ADC1_CH0) | J-POT-A wiper | analog in |
 
 Unlisted pads (GPIO22-34) do not exist on this module - the numbering jumps from IO21 to IO35.
+
+**Pads 36 and 37 appear in the schematic as `RXD0` and `TXD0`, not as `IO44` and `IO43`.** KiCad's `RF_Module:ESP32-S3-WROOM-1` symbol names those two pins by their UART0 function, matching Espressif's own pinout table. They are the same pins: pad 36 = RXD0 = GPIO44, pad 37 = TXD0 = GPIO43. Every other pad is named `IOnn`, so these two are the only place where the symbol label and this table disagree on wording.
+
+### Status LEDs - D-RUN, D-FAULT, D-PWR
+
+All three are wired the same way: **anode toward the source, cathode to ground.**
+
+```
+  GPIO45 --[R 1k]--|>|-- GND      D-RUN, green
+  GPIO46 --[R 1k]--|>|-- GND      D-FAULT, red
+  +3V3   --[R 2k2]--|>|-- GND     D-PWR, green - always on, no GPIO
+```
+
+| Ref | Net | Series R | Current | Meaning |
+|---|---|---|---|---|
+| D-RUN | GPIO45 | 1k | ~1.2 mA | Solid = pumping |
+| D-FAULT | GPIO46 | 1k | ~1.4 mA | Blinking = fault |
+| D-PWR | +3V3 | 2k2 | ~0.6 mA | Rail is up |
+
+At 3.3 V with a green Vf of about 2.1 V, 1k gives (3.3 - 2.1) / 1000 = 1.2 mA; a red Vf of 1.9 V gives 1.4 mA. That is dim by 1990s standards and perfectly visible on any modern high-efficiency part. Drop to 470R if the enclosure window is tinted - about 3 mA, still an order of magnitude under the 20 mA the ESP32-S3 wants as a per-pin ceiling, and still inside the 10 mA the power budget allots to indicators.
+
+Put D-PWR on **+3V3**, not on +5V or +24V. A 3.3 V indicator proves the buck *and* the LDO are both alive, which is the question you actually have when a board does nothing.
+
+**Do not wire these active-low.** The tempting alternative - 3V3 through the resistor to the LED, GPIO sinking to turn it on - would work on an ordinary pin and is wrong here: it holds GPIO45 and GPIO46 *high* through the resistor while the pin is hi-Z at reset. That is a mis-strapped VDD_SPI and a mis-strapped boot mode, on every power-up. The anode-to-GPIO topology is what makes these two pins usable at all.
+
+Firmware matches: `digitalWrite(LED_RUN_PIN, HIGH)` lights it.
+
+### Why the status LEDs sit on strapping pins
+
+The indicator LEDs are on **GPIO45 and GPIO46**, both strapping pins, rather than on the UART0 pair. That is deliberate in both directions.
+
+Putting the LEDs on strapping pins is safe because of how they are driven. Each LED is anode-driven through a 1k series resistor to ground, so the MCU pin sources current when the LED is lit and is high-impedance during reset. Both pins have an internal pulldown enabled at reset, so at strap-sample time they read 0 - which is the state both need anyway: GPIO45 low selects a 3.3 V VDD_SPI flash, GPIO46 low leaves ROM message printing enabled. An LED cannot pull either pin high, because its cathode is at ground. Firmware drives them long after the straps are latched, and any reset re-tristates the pin before the next sample.
+
+Keeping the LEDs *off* GPIO43/44 buys two things:
+
+- **A serial recovery port.** The console normally runs over native USB (GPIO19/20). If that is ever unusable - a bad USB descriptor, a bricked CDC config, a bootloader problem - UART0 on a 3-pin header is the way back in. Spending it on an LED removes the only fallback.
+- **No boot flicker.** The ROM bootloader prints its log on TXD0 at every reset. An indicator LED on that pin flashes on every power-up, which reads as a fault to anyone watching the panel.
+
+Bring GPIO43/44 out to **J-DBG**, a 3-pin 0.1 in header: pin 1 GND, pin 2 TX, pin 3 RX. No population cost if left unstuffed.
 
 **No external crystal or oscillator.** The 40 MHz crystal, its load capacitors, the SPI flash and the RF matching network are all inside the module - that is the main thing you are buying over a bare ESP32-S3 chip. Nothing external is needed beyond the reset RC, the boot strap and decoupling.
 
@@ -197,6 +240,12 @@ A TMC2209 takes only a 2-bit address, so one bus reaches four drivers. That is t
 
 **MS1/MS2 are not microstepping select.** That is their standalone-mode role. Once PDN_UART is used for UART they become the address, and microstepping moves to `CHOPCONF.MRES` in software. So the four drivers on bus A must be strapped *differently* - identical straps collide the bus.
 
+**`VIO` in that table means the +3V3 rail** - the same net that feeds the module's VIO/VDD pin, nothing else. Not +5V, not VMOT, and not the module's `5VOUT` pad. A logic input above VIO is out of spec, and the reason VIO is 3.3 V in the first place is the section above.
+
+MS1 and MS2 have internal pull-downs, so a pin strapped to GND could in principle be left open. **Strap it anyway.** These are high-impedance inputs a few millimetres from a 24 V chopper, the same argument that grounds CLK, and a floating pin records no intent - the next person cannot tell address 0 from a forgotten net. Some vendors' modules also add their own pull-ups, which silently inverts the table.
+
+Route each strap through its own **solder jumper or 0R pad to +3V3 and to GND**. The drivers are socketed and interchangeable, so the address lives on this board, not on the module - and a reworkable pad is the difference between changing an address and cutting a trace. Current through a strap is the pull-down's, tens of microamps, so the pads carry nothing.
+
 **Maximum resolution does not come from these pins.** The firmware commands 1/16 and enables MicroPlyer, which interpolates to 256 microsteps inside the driver: the motor sees 1/256 motion while the step rate stays at 181 steps/s peak. Commanding 1/256 natively would give identical smoothness at 2894 steps/s - 16x the interrupt load and EMI for nothing. Interpolation is also at its best here, since MicroPlyer predicts from the last step interval and this system only ever runs at constant velocity.
 
 > **Verify the UART config at startup.** `CHOPCONF.MRES` resets to 0, which is 256 microsteps. A driver that never received its configuration therefore runs at 1/256 while the firmware sends 1/16-rate pulses, delivering **16x too little flow** with nothing reporting a fault. A mis-strapped address does this. Check `test_connection()` on every driver and fault the system if any does not answer.
@@ -208,26 +257,70 @@ A TMC2209 takes only a 2-bit address, so one bus reaches four drivers. That is t
 ## Power
 
 ```
-J1 (24 V) --[F1 5A]--[Q1 reverse-polarity P-FET]--[D1 TVS SMBJ26A]--+-- +24V
-                                                                    |
-                                              C1 470-1000 uF 35 V ---+
-                                                                    |
-                                                    +---------------+---------------+
-                                                    |                               |
-                                        U2-U6 VM (5x)                    U7 buck 24->5 V
-                                                                                    |
-                                                                                +5V rail
-                                                                                    |
-                                                                        U8 LDO 5 -> 3.3 V
-                                                                                    |
-                                                            +3V3: U1, all VIO, pots, display
+J18 (24 V) --[F1 2A T]--[Q1 P-FET]--+-- +24V
+                                    |
+              D6 TVS SMBJ26A -------+
+              C9 470 uF 35 V --------+
+                                    |
+                    +---------------+---------------+
+                    |                               |
+      driver VMOT (5x sockets)          U5 buck 24 -> 5 V
+                                                    |
+                                                +5V rail
+                                                    |
+                                        U3 LDO 5 -> 3.3 V
+                                                    |
+                            +3V3: U1, all VIO, pots, display
 ```
 
 | Net | Sources | Loads |
 |---|---|---|
-| +24V | J1 via F1/Q1/D1 | U2-U6 VM |
-| +5V | U7 | U8 input, fan header |
-| +3V3 | U8 | U1 (22 uF + 100 nF at pad 2), U2-U6 VIO, pot high side, display |
+| +24V | J18 via F1/Q1 | Driver VMOT x5, U5 VIN |
+| +5V | U5 | U3 input, VBUS Schottky D1 |
+| +3V3 | U3 | U1 (22 uF + 100 nF at pad 2), all driver VIO, pot high side, display |
+
+### Input protection, net by net
+
+Refdes match the schematic. D1 and D2 were already the VBUS Schottky and the buck catch diode, so the protection parts start at D6.
+
+| Ref | Value | Pin | Net |
+|---|---|---|---|
+| J18 | Screw terminal 2-pin | 1 | GND |
+| | | 2 | `VIN_RAW` |
+| F1 | 2 A time-lag, 5x20 holder | 1 | `VIN_RAW` |
+| | | 2 | `VIN_FUSED` |
+| Q1 | P-channel, >= -60 V | **D (drain)** | `VIN_FUSED` |
+| | | **S (source)** | `+24V` |
+| | | **G (gate)** | `Q1_GATE` |
+| R11 | 100k | 1 | `Q1_GATE` |
+| | | 2 | GND |
+| D7 | 15 V Zener, BZV55C15 | **A (anode)** | `Q1_GATE` |
+| | | **K (cathode)** | `+24V` |
+| D6 | TVS SMBJ26A | **cathode / pad 1** | `+24V` |
+| | | **anode / pad 2** | GND |
+| C9 | 470-1000 uF, 35 V, low ESR | + | `+24V` |
+| | | - | GND |
+
+Three nets are new: `VIN_RAW`, `VIN_FUSED`, `Q1_GATE`. Everything already on `+24V` - U5 pin 7, the five socket VMOT pins, `Cin`/`Cin1`/`Cin2`/`Cinx` - stays where it is and simply ends up downstream of the protection.
+
+**The one edit to existing wiring:** J18 pin 2 currently connects straight to `+24V`. Break that and relabel it `VIN_RAW`. If you miss this the whole block is shorted out and does nothing, while the board still works perfectly on the bench - which is the worst possible failure to ship.
+
+Watch three orientations, because all three are silently wrong rather than obviously wrong:
+
+- **Q1 drain faces the input, source faces the load.** Reversed, the body diode conducts a backwards supply straight through the board.
+- **D7 cathode to source**, anode to gate. Reversed it is a forward diode clamping the gate 0.7 V below the rail and the FET never turns on.
+- **D6 cathode to +24V**, anode to GND. Reversed it is a forward diode across the supply and blows F1 on first power-up. Watch this one: KiCad's `Diode:SM6T*` symbols name both pins `A1`/`A2` even though the parts are unidirectional, so the schematic shows no cathode. `Diode_SMD:D_SMB` puts the band on **pad 1**, which makes pin 1 the end that goes to `+24V`.
+- **D6 belongs on the rail, not on the gate.** Wired gate-to-GND it never conducts, nothing looks wrong on the bench, and the rail has no protection at all.
+
+Keep the return unfused: J18 pin 1 straight to the ground plane.
+
+The per-socket **100 uF + 100 nF on VMOT** hang off `+24V` at each driver, not at the input. That placement is the point - the socket's inductance is what makes a distant bulk capacitor useless to the driver.
+
+#### Bench check before trusting it
+
+1. No load, correct polarity: `+24V` should read within a few tens of millivolts of `VIN_FUSED`. A 0.6 V drop means Q1 never enhanced and current is going through the body diode - check D7's orientation.
+2. Reverse the supply leads deliberately, current-limited: `+24V` should read 0 V and the fuse should survive.
+3. Measure `Q1_GATE` in normal operation. Expect roughly 10-12 V below `+24V`. Near 0 V difference means the Zener is backwards or R11 is open.
 | GND | - | Single-point join between power and signal ground near C1 |
 
 **Never linear-regulate 3.3 V from 24 V.** At the ESP32's 500 mA WiFi peak that dissipates 10.4 W. The intermediate 5 V rail exists for exactly this reason.
@@ -279,6 +372,20 @@ Use normally-closed switches so a broken wire reads as triggered. Internal pullu
 
 The E-stop must break DRV_EN in hardware. GPIO14 exists only so the display and web UI can report the state - it is not the interlock.
 
+**Breaking the wire is not sufficient - the pull-up is what makes it work.**
+
+```
+  GPIO16 ----[ J-ESTOP pins 1-2, NC contact ]----+---- DRV_EN -> 5x driver EN
+                                                 |
+                                             [10k] to +3V3
+```
+
+TMC2209 EN is active LOW. An open net floats, and a floating EN input may read as enabled - so a bare series contact can leave the drivers live. The 10k to VIO is what turns an open contact into a defined *disabled*. Use a latching mushroom head with **NC** contacts so a cut cable also reads as tripped.
+
+Holding torque disappears when EN goes high. That is acceptable here: a 2 mm lead screw is not back-drivable, so line pressure cannot push a plunger back.
+
+**The RUN switch does not replace this.** GPIO13 is an input firmware polls; stopping depends on firmware running, the ISR being alive and the main loop being reached. The E-stop exists for the case where none of that is true - a hung ISR, a watchdog that did not fire, a crash that left STEP toggling. In that state the RUN switch is an input nobody is reading, and a syringe pump keeps driving a plunger into a closed line.
+
 ### J-DISP - I2C display (4-pin, works on N16 and R8)
 
 | Pin | Net |
@@ -288,20 +395,70 @@ The E-stop must break DRV_EN in hardware. GPIO14 exists only so the display and 
 | 3 | SDA -> U1 GPIO47, 4k7 pullup to 3V3 |
 | 4 | SCL -> U1 GPIO21, 4k7 pullup to 3V3 |
 
-### J-TFT - SPI display (8-pin, **N16 only**)
+### J-TFT - SPI display (9-pin, **N16 only**)
+
+Pin order matches the 2.4" ILI9341 module exactly, so the cable is straight-through with no crossed conductors.
+
+| Pin | Module label | Net |
+|---|---|---|
+| 1 | VCC | +3V3 |
+| 2 | GND | GND |
+| 3 | CS | GPIO37, **via 0R jumper R-J3** |
+| 4 | RESET | Own RC: 10k to +3V3, 100 nF to GND. **Not the MCU ~RESET net** |
+| 5 | DC | GPIO48 |
+| 6 | SDI (MOSI) | GPIO36, **via 0R jumper R-J2** |
+| 7 | SCK | GPIO35, **via 0R jumper R-J1** |
+| 8 | LED | +3V3 through solder jumper R-BL |
+| 9 | SDO (MISO) | **No-Connect** |
+
+**Leave R-J1..R-J3 unpopulated when fitting an N16R8 module.** GPIO35/36/37 are bonded to the PSRAM die on that part, and driving them is bus contention, not a wasted pin.
+
+Three things to check on the specific module before wiring it:
+
+- **VCC voltage.** Modules carrying an AMS1117 and a level shifter accept 5 V; bare ones are 3.3 V only. This header supplies 3.3 V, which is safe for both - an AMS1117 part simply runs in dropout on its regulator and takes logic level directly. Never move this pin to 5 V to "help" a regulated module: the logic pins on a bare module are not 5 V tolerant, and you cannot tell the two apart from the connector.
+- **SDO is left open deliberately.** The firmware never reads registers back, and nothing else shares this SPI bus, so a module whose SDO does not tri-tri-state properly cannot cause trouble. If you later add a second SPI device, revisit this.
+- **Touch, if the module has it.** Many 2.4" ILI9341 boards add an XPT2046 with T_CLK, T_CS, T_DIN, T_DO and T_IRQ. Those stay unconnected: touch would want five more GPIO plus a second CS, and there is no room in the pin budget. The pots and the web UI are the input path.
+
+##### RST gets its own RC, not the MCU reset net
+
+Sharing the board's ~RESET net looks free and costs nothing in GPIO, but it loads the one node on this board whose time constant was chosen deliberately. EN carries 10k and 1 uF for a ~10 ms power-up delay. Most ILI9341 modules already fit their own pull-up on RST, typically 10k to their 3.3 V; tie the two together and that pull-up lands in parallel with the board's, halving R and halving the EN delay. The EN cap was sized to 1 uF for a reason, and this quietly undoes it.
+
+Give the display its own **10k to +3V3 and 100 nF to GND** instead. That is a ~1 ms low pulse at power-up, comfortably past the 10 us minimum the controller asks for, and it is independent of anything the MCU does.
+
+Losing the shared reset costs nothing in practice: every driver library issues a software reset (`SWRESET`, 0x01) during init, so a display that missed a hardware reset still comes up clean when firmware restarts. The hardware pulse only has to cover the power-up case, which is exactly what the RC does.
+
+If the module turns out to have no pull-up of its own, tying RST to the MCU ~RESET net becomes safe again - but check with an ohmmeter before assuming it, not after.
+
+##### LED / BL is a backlight, not a logic pin
+
+The backlight is four white LEDs and it dominates the module's draw - roughly **60-100 mA** on a 2.4" panel against the 80 mA this design budgets for the display as a whole. It is worth measuring on your actual module rather than trusting a listing. Two consequences:
+
+- **Never drive it from a GPIO directly** unless the pin is a transistor base. 60 mA is three times the ESP32-S3's 20 mA per-pin ceiling; the pin survives at first and degrades.
+- **Check what the pin actually is before connecting it.** An ohmmeter from the pin to GND tells you: a few hundred ohms means a series resistor is fitted, open means it is a logic input to an on-board driver, near-zero means a bare LED anode and the resistor is your job.
+
+Simplest correct wiring is **the LED pin to +3V3, backlight always on**, which is what a bench instrument wants anyway. Wire it as a **2-pad solder jumper to +3V3, strapped by default** (R-BL), with the free side stubbed to a spare GPIO pad. Dimming then costs a jumper move rather than a respin.
+
+Which pin drives it depends on which of the three types you have:
+
+- **Logic input to an on-board driver** (the common case on modules whose documentation says "connect to a GPIO"): strap to +3V3 for always-on, or drive the pin directly and PWM it with LEDC. No external transistor - the module already has one. **Check polarity first**: some modules switch a PNP or P-FET, so LOW is on, and strapping that kind to +3V3 gives a dark screen that reads as a dead display.
+- **LED anode with a series resistor on-board:** +3V3 only. A GPIO cannot sink or source this.
+- **Bare LED anode:** you supply the series resistor, then +3V3.
+
+For the last two, dimming needs a low-side N-channel FET (2N7002 or similar): BL to +3V3, LED return through the FET drain, source to GND, gate to a GPIO with a **100k pull-up to +3V3** so the backlight defaults ON if firmware never touches it. Nothing on this board is worth a dark screen because a pin failed to initialize.
+
+Either way the backlight current comes from the module's VCC pin - J-TFT pin 1, off the 3.3 V rail, through the LDO. Switching it with a GPIO gates that current; it does not move it somewhere cheaper.
+
+There is no spare GPIO for backlight control today: GPIO43/44 are the debug UART. Leave the pad and the jumper, populate when a pin frees up.
+
+### J-DBG - UART0 console (3-pin 0.1 in header)
 
 | Pin | Net |
 |---|---|
-| 1 | +3V3 |
-| 2 | GND |
-| 3 | SCK -> GPIO35, **via 0R jumper R-J1** |
-| 4 | MOSI -> GPIO36, **via 0R jumper R-J2** |
-| 5 | CS -> GPIO37, **via 0R jumper R-J3** |
-| 6 | DC -> GPIO48 |
-| 7 | RST -> ~RESET net (shares the MCU reset) |
-| 8 | BL -> +3V3, or a transistor for dimming |
+| 1 | GND |
+| 2 | UART0_TX -> GPIO43 (pad 37) |
+| 3 | UART0_RX -> GPIO44 (pad 36) |
 
-**Leave R-J1..R-J3 unpopulated when fitting an N16R8 module.** GPIO35/36/37 are bonded to the PSRAM die on that part, and driving them is bus contention, not a wasted pin.
+Unpopulated by default - the pads cost nothing and the header goes on only when it is needed. This is the recovery path when the native USB console is not available, and it is where the ROM bootloader prints at 115200 baud on every reset. Levels are 3.3 V; do not connect a 5 V adapter without a level shifter.
 
 ---
 

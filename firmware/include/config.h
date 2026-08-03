@@ -135,15 +135,19 @@
 // GPIO22-34 on the package at all; the pad numbering jumps from IO21 to IO35.
 // Check any pin against that before assigning it.
 //
-// Reserved: GPIO19/20 (native USB D-/D+), GPIO0/3/45/46 (strapping).
-// That leaves 30 comfortable pins on N16.
+// Reserved: GPIO19/20 (native USB D-/D+), GPIO0/3 (strapping), GPIO43/44
+// (UART0, kept free as a serial recovery port). GPIO45/46 are strapping pins
+// but carry the indicator LEDs - see the LED_*_PIN note below for why that is
+// safe. That leaves 30 comfortable pins on N16.
 //
 // Avoids GPIO35-37 for everything except the optional SPI display, so the map
 // works on BOTH N16 and the octal-PSRAM N16R8. R8 consumes 35-37 for the
 // SPI0/1 data lines, and a map that used them would fail on the wrong part
 // with no symptom beyond pumps that never move.
 //
-// Budget: 26 pins used. 4 spare on N16 (35, 36, 37, 48), 1 on R8 (48).
+// Budget: 26 pins used. 6 spare on N16 (35, 36, 37, 43, 44, 48), 3 on R8
+// (43, 44, 48). GPIO43/44 are spare by choice, not by accident - they are the
+// UART0 pair and are worth more as a recovery port than as two more IO.
 // ---------------------------------------------------------------------------
 
 // STEP pins must stay contiguous and all above GPIO32, so the ISR sets and
@@ -160,8 +164,21 @@
 
 #define RUN_SWITCH_PIN  13             // maintained, closed to GND
 #define ESTOP_SENSE_PIN 14             // sense only; the cut is hardware
-#define LED_RUN_PIN     43
-#define LED_FAULT_PIN   44
+// LEDs sit on the two strapping pins, which is safe here and deliberate.
+//
+// Both are anode-driven through a series resistor to GND, so the pin sources
+// current when lit and is hi-Z during reset. GPIO45 and GPIO46 both have an
+// internal pulldown enabled at reset, so at strap-sample time they read 0 -
+// which is exactly the state both need: 45 low selects a 3.3 V VDD_SPI flash,
+// 46 low enables ROM message printing. An LED cannot pull them high because
+// its cathode is at ground. The firmware driving them high later is after the
+// straps are latched, and a reset re-tristates the pin before the next sample.
+//
+// The alternative, GPIO43/44, is UART0. Those pins stay free so there is a
+// serial recovery port if native USB is ever unusable, and so the ROM boot log
+// does not flicker an indicator LED on every reset.
+#define LED_RUN_PIN     45             // VDD_SPI strap, pulled low at reset
+#define LED_FAULT_PIN   46             // ROM-print strap, pulled low at reset
 
 #define I2C_SDA_PIN     47
 #define I2C_SCL_PIN     21

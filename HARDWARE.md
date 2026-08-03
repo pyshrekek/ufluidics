@@ -86,7 +86,7 @@ The ESP32 serves the web UI itself. Add a Pi only if you later want camera captu
 | USB-serial | **none** | 0 | ESP32-S3 has native USB. Wire D+/D- to GPIO20/19 |
 | USB connector | USB-C receptacle | 1 | 5.1k pulldowns on both CC pins |
 | Auto-reset | 2x transistor (DTR/RTS) | 1 set | Only if you also fit a serial header; native USB does not need it |
-| Boot/reset buttons | Tactile SMD | 2 | GPIO0 needs 10k to 3V3; EN needs 10k + 100 nF |
+| Boot/reset buttons | Tactile SMD | 2 | GPIO0 needs 10k to 3V3; EN needs 10k + 1 uF |
 | Crystal / oscillator | **none** | 0 | 40 MHz crystal, flash and RF matching are inside the module |
 
 ### Stepper drivers
@@ -128,13 +128,30 @@ The cost is two failure modes sockets introduce - a module can be inserted backw
 | Item | Part | Notes |
 |---|---|---|
 | Input connector | 5.08 mm screw terminal, 2-pin | Or barrel jack; terminal is more secure |
-| Fuse | 5 A slow-blow, holder or polyfuse | |
+| Fuse | **2 A time-lag**, 5x20 mm cartridge in a PCB holder | Sized to the load, not the PSU - see below |
 | Reverse polarity | P-MOSFET (e.g. SI2333) in the high side | Better than a Schottky - no 0.5 V drop, no heat |
 | Input TVS | SMBJ26A | Clamps inductive kickback from motor leads |
 | Bulk cap | 470-1000 uF, 35 V, low ESR | Plus the per-driver 100 uF above |
 | 24 V -> 5 V | **Recom R-78HB5.0-1.0** module (9-72 V in, 5 V 1 A, SIP-3) | One part, no external components. See below |
 | 5 V -> 3.3 V | **AP7361C-33E-13**, SOT-223 | 1 A, 140 mV dropout at 300 mA. Low dropout is required - see below |
+| LDO input cap | 1 uF X7R at the AP7361C VIN pin | Datasheet minimum. Separate from the 5 V bulk |
+| LDO output cap | 1 uF X7R at the AP7361C VOUT pin | Datasheet minimum for loop stability. The 22 uF at the module is bulk, not a substitute |
 | 3.3 V bulk | 22 uF + 100 nF at the module | Espressif minimum is 10 uF; WiFi TX is bursty |
+| EN delay | 10k to 3V3 + **1 uF** to GND | Espressif's recommended RC. See below |
+
+### The EN cap is 1 uF, not 100 nF
+
+EN (CHIP_PU, pad 3) must rise *after* the 3.3 V rail is valid. The 10k pullup and the cap to ground form the delay that guarantees it, and Espressif's hardware design guidelines name the values: "The recommended setting for the RC delay circuit is usually R = 10 kOhm and C = 1 uF."
+
+100 nF gives a 1 ms time constant. That is short enough to lose the race against a slow supply ramp, and the failure is the worst kind - intermittent. A board that boots on the bench and fails one power-up in twenty, or that occasionally fails to finish a flash erase, is this circuit. 1 uF gives about 10 ms and costs nothing.
+
+If it still misbehaves - a very slow ramp, or a rail that browns out rather than dropping cleanly - the guidelines' next step is a dedicated power-monitor/supervisor IC holding EN low below about 3.0 V. Leave a footprint for one rather than tuning the RC upward forever.
+
+The reset button sits across the same cap, discharging 1 uF through the switch contacts. That is harmless at this size and needs no series resistor.
+
+**BOOT (GPIO0) does not get an RC - pull-up and button only.** The two pins look symmetric and are not. EN's capacitor buys a delay; GPIO0 has no delay to buy, because it is sampled once on the reset release edge and either reads high or low. A capacitor there changes nothing about that sample, slows the pin if GPIO0 is ever repurposed as an output, and on any board carrying an auto-reset transistor pair it breaks download-mode entry. This board has no auto-reset circuit - native USB makes it unnecessary - so a cap would be merely useless, which is still the wrong thing to leave on a strapping pin for the next revision to puzzle over.
+
+Entry to download mode is unchanged: hold BOOT, tap RESET, release BOOT. The 1 uF makes reset release lag the button by about 10 ms, far inside human timing.
 
 ### Power budget
 
@@ -145,6 +162,8 @@ The cost is two failure modes sockets introduce - a module can be inserted backw
 | From 24 V for logic | **~53 mA** | ~150 mA |
 
 Logic draw off the 24 V rail is trivial next to the motors. A 3 A buck is 3-4x oversized, which is deliberate: margin is nearly free and covers a fan later.
+
+**The display's 80 mA is the softest number in that table**, and almost all of it is backlight. Measured 2.4" ILI9341 modules land anywhere from 60 to 110 mA depending on the series resistor the vendor fitted. The design absorbs the top of that range without changes: at 110 mA the 3.3 V average becomes 245 mA, the LDO burns 0.42 W instead of 0.37 W, and the SOT-223 junction rise goes from +20 C to +22 C. Worth measuring your module, not worth redesigning around.
 
 ### Buck: use a module, not a discrete design
 
@@ -223,27 +242,38 @@ It also still has a catch diode, so the high-di/dt loop still needs a tight layo
 | VSW (8) | Inductor, **and** the catch diode cathode. 1 A 40 V Schottky, anode to GND |
 | CB (1) | 0.01 uF to **VSW**, not to GND - the bootstrap rides on the switch node |
 | FB (4) | Directly to the **+5 V output** at the output capacitor. No divider; the fixed-5.0 version has it internally, confirmed by the datasheet spec'ing feedback bias current as "ADJ Version Only". Route as a sense line away from VSW |
+| ON/OFF (5) | **Leave floating for always-on**, or drive from a 3.3 V GPIO. Active HIGH |
 | GND (6) | Ground plane |
 | VIN (7) | +24 V, input capacitors close |
+| NC (2, 3) | No connect |
 
-**ON/OFF polarity is unresolved and must be checked before ordering.** The electrical table specifies standby current at `ON/OFF Pin = 0V`, which implies HIGH = ON. But the pin carries an overbar in the symbol, and the rest of the SIMPLE SWITCHER family (LM2576, LM2596) is active-low. Confirm against Figure 3, the typical application circuit, in the TI datasheet.
+**ON/OFF polarity is resolved: active HIGH.** SNVS129G (rev June 2025) Table 4-1 states "Enable input to the voltage regulator. High = ON and low = OFF. Pull this pin high or float to enable the regulator." Section 6.4 repeats it: below 1.4 V is shutdown at 20 uA standby, above 1.4 V the device switches. The pin sources its own bias current (Figure 5-9, "ON/OFF Pin Current (Sourcing)", ~20 uA typical), which is why floating reads as HIGH. The overbar in the symbol is a family-inherited artifact; it does not match this part's own text.
 
-Two constraints hold either way:
+So the three-resistor pad plan is unnecessary. Two options:
+
+- **Always on:** float the pin. No parts.
+- **MCU shutdown control:** drive pin 5 from a 3.3 V GPIO. That clears the 2.0 V worst-case threshold with margin and stays under the 6 V absolute maximum. Add a 100 k pulldown if the rail must stay off while the GPIO is tri-stated during ESP32 boot - the pin's own source current will otherwise pull it up.
+
+Two constraints regardless:
 
 - **Never tie ON/OFF to VIN.** Absolute maximum on that pin is **6 V** against a 24 V rail. This destroys the part immediately.
 - **Never tie it to the 5 V output.** The output is 0 V at power-up, so the regulator would never start.
 
-Lay out both options and populate one - three resistor pads:
+Fit a divider from VIN only if input UVLO is wanted for its own sake (roughly 30 k / 4.3 k gives about 3.3 V at 24 V in and will not start below about 16 V). Keep it stiff - tens of kilohms, not hundreds - so the pin's 20 uA source current does not shift the node, and check the node stays under 6 V at worst-case VIN.
 
-```
-  VIN --[R1 30k]--+-- ON/OFF     active HIGH: fit R1 and R2
-                  |                -> ~3.3 V at 24 V in, plus free UVLO
-             [R2 4.3k]                (will not start below about 16 V)
-                  |
-                 GND             active LOW: omit R1, fit R2 as a short to GND
-```
+##### LM2675 external components for 24 V -> 5 V
 
-Keep the divider stiff - tens of kilohms, not hundreds - so the pin's own bias current does not shift the node, and check it stays under 6 V at worst-case VIN. Thresholds are 1.4 V typical, 2.0 V maximum.
+| Part | Value | Note |
+|---|---|---|
+| L1 | 68 uH, Isat >= 2.2 A | 5 V nomograph (datasheet Figure 7-4) at 24 V in. Isat must clear the 2.2 A max current limit, not the load |
+| D1 | 1 A 40 V Schottky, e.g. SS14 / B140 / MBRS140 | Reverse rating >= 1.25x max VIN. Anode to GND, cathode to VSW |
+| CIN | 22 uF 50 V low-ESR, plus 0.1 uF ceramic at pin 7 | RMS current rating >= half the DC load current |
+| COUT | 47-68 uF **with ESR**, tantalum or polymer | See below |
+| CB | 0.01 uF 50 V ceramic | CB to VSW |
+
+**Do not use an all-ceramic output capacitor.** The LM2675 is voltage-mode and internally compensated around output-capacitor ESR; every capacitor in the datasheet's selection tables is a solid tantalum. An X5R/X7R output with milliohm ESR moves the ESR zero out of the loop and can ring or oscillate. Use a tantalum or polymer part, or add a small series resistance.
+
+Note the datasheet contradicts itself on CB: Table 4-1 says 470 nF, while every application circuit and design example says 0.01 uF. Follow the application circuits.
 
 Go full discrete (TPS54360, documented below) only if you later need more than 1 A or reach volumes where part cost dominates.
 
@@ -354,6 +384,104 @@ If you socket an ESP32 DevKitC instead of reflowing a bare module, it brings its
 
 **PSU sizing:** five motors at 24 V, chopper-driven, average maybe 0.5 A each into the drivers. Specify a **24 V 5 A (120 W)** supply. That is generous, and generous is correct for inductive loads.
 
+### Input protection: fuse, then P-FET, then TVS
+
+Order matters as much as the parts.
+
+#### Sizing the fuse to the load, not to the PSU
+
+A fuse chosen to match a 24 V 5 A supply protects the supply. The board draws far less, and the pumps run at constant low velocity, so the motors sit at holding current and the dominant term is I<sup>2</sup>R rather than acceleration:
+
+| Term | Value |
+|---|---|
+| Per motor, two phases at 800 mA RMS into ~2 ohm | ~2.6 W |
+| Plus driver loss | ~2.9 W, so **0.12 A at 24 V** |
+| Five motors | ~0.6 A |
+| Logic off the 24 V rail | 0.05 A |
+| **Steady state total** | **~0.7 A** |
+
+| Spec | Value | Why |
+|---|---|---|
+| Current | **2 A** | About 2x the load. Fuses derate to 75% of rating for continuous duty, giving 1.5 A usable against 0.7 A |
+| Characteristic | **Time-lag (T)** | Must survive inrush into the 470-1000 uF bulk. A fast-blow opens on first power-up |
+| Voltage | **>= 32 VDC**, not merely 250 VAC | An AC rating says nothing about extinguishing a DC arc - DC has no zero crossing to help |
+| Breaking capacity | >= 35 A | Must exceed what the supply dumps into a dead short before its own protection folds back |
+| Position | +24 V at J18, ahead of Q1 and the TVS | Return stays unfused |
+
+Step to 3 A only if measured sustained draw exceeds about 1.3 A.
+
+**Cartridge, not polyfuse.** A PPTC self-resets, which is the wrong trade here: it trips at roughly 2x hold current, its hold current derates about 50% by 70 C inside an enclosure, it adds 50-100 mohm in series with the motor supply, and it degrades on every trip. A cartridge fuse is deterministic, and a blown one is a diagnosable event rather than a rail that sags when the case gets warm.
+
+**What the fuse is not for.** It does not protect the drivers or the MCU - silicon fails in microseconds and fuses in milliseconds. It protects the harness and the supply lead, and turns a shorted high-side FET into an open circuit instead of a fire. Reverse polarity is Q1's job. Put the rating in silkscreen next to the holder, or the next person fits whatever is in the drawer.
+
+```
+        J18+          F1 5A
+   24V IN o---------/\/\/------+------- D  |     S -------+------ +24V rail
+                                          |Q1 (P-ch)      |
+                                          G               |
+                               +----------+           [TVS SMBJ26A]
+                               |          |               |
+                            [Rg 100k]  [Dz 15V]      [C 470-1000uF]
+                               |          | cathode to S,         |
+   24V IN o-------------------+----------+ anode to G            |
+        J18-                   GND                              GND
+```
+
+#### Drain toward the input, source toward the load
+
+This reads backwards and is not. On a P-channel device the body diode runs anode-at-drain to cathode-at-source, so this orientation points it the way current normally flows.
+
+- **Correct polarity:** at power-up the body diode conducts input to load, the rail reaches about 23.3 V, the gate sits near ground, Vgs is about -23 V and the FET turns hard on. The channel then shorts out its own body diode and the drop becomes I x Rds(on) - single-digit millivolts, against 0.5 V and 0.5 W for the Schottky this replaces.
+- **Reversed:** the body diode is reverse-biased and blocks, and source and gate sit at nearly the same potential so Vgs is about 0 and the channel stays off. Nothing conducts anywhere on the board.
+
+Wire it the other way - source to the input - and the reverse case forward-biases the body diode straight through the board. That arrangement is a reverse *current* blocker, a different function, and the two are confused constantly.
+
+#### The gate clamp is mandatory
+
+Vgs(max) is ±20 V on nearly every P-FET, and a bare gate-to-ground resistor puts the full 24 V across it. The oxide fails on first power-up. The 15 V Zener holds Vsg at 15 V, leaving the gate at about +9 V with the FET fully enhanced, and Rg limits Zener current.
+
+#### SI2333 is the wrong part
+
+It is a -30 V device. The TVS clamps at 26-29 V, so headroom on a rail that five motors dump back-EMF into is 1 to 4 V - the same argument that ruled out the 30 V buck candidates. Specify instead:
+
+| Parameter | Target |
+|---|---|
+| Vds | **>= -60 V** |
+| Vgs | ±20 V, hence the Zener |
+| Id | >= 5 A |
+| Rds(on) | <= 50 mΩ at Vgs = -10 V |
+
+At roughly 1 A average the FET burns about 50 mW, so thermal design is not a consideration.
+
+#### Part selection
+
+| Ref | Spec | Candidates |
+|---|---|---|
+| Q1 | P-channel, Vds **>= -60 V**, Vgs ±20 V, Id >= 5 A, Rds(on) <= 50 mohm at Vgs = -10 V | SUD50P06-15 (-60 V, ~15 mohm, TO-252); IRFR5305 (-55 V, ~60 mohm, DPAK); IRF9540N (-100 V, TO-220) for through-hole |
+| Rg | 100k, gate to GND | Any |
+| Dz | 15 V Zener, 500 mW, gate to source. Cathode at source | BZT52C15 (SOD-123) |
+| TVS | **SMBJ26A**, unidirectional, 600 W, SMB | Keep this one - see below |
+
+Verify stock against JLC's live library before committing; Rds(on) is not the binding constraint at 1 A, so substitute freely on that axis but never on Vds.
+
+The Zener sits at about 90 uA with a 100k Rg, which is well below its knee, so it will clamp nearer 12-14 V than the marked 15 V. That is fine in both directions: the FET is fully enhanced past -10 V, and 14 V is comfortably inside the ±20 V limit. Drop Rg to 10k if a firmer clamp is wanted - it costs 8 mW and turns the FET on faster.
+
+**Use the unidirectional TVS.** The `A` suffix is unidirectional, `CA` is bidirectional. This is a DC rail, and with the TVS sitting behind Q1 it never sees reverse voltage at all, so a bidirectional part only raises the clamp for nothing.
+
+#### The TVS is chosen by the buck's absolute maximum, not by the rail
+
+SMBJ26A stands off 26 V, breaks down between 28.9 and 31.9 V, and clamps at **42.1 V** at its 14.3 A peak pulse rating. The LM2675's absolute maximum supply voltage is **45 V**. That is the whole selection: 42.1 V fits under 45 V with a little room, and the next size up does not - SMBJ28A clamps at about 45.4 V and exceeds the regulator's rating outright.
+
+**Be clear about what this does not protect.** The TMC2209 runs to 29 V with an absolute maximum near 30 V. Nothing can both stand off a 25.2 V rail (24 V nominal plus 5%) and clamp below 30 V under real fault current - the two requirements do not overlap. So for small and moderate transients the TVS conducts around 29-32 V and holds the drivers roughly in spec, while a large event clamps at 42 V and the drivers are what dies. The board and the supply survive; the sockets exist so that is a swap.
+
+The practical mitigations are the ones already specified: **100 uF plus 100 nF at every driver socket**, so most of the motor's own energy is absorbed locally instead of travelling to the input TVS, and short motor leads. This is another instance of the design running a 24 V rail close to the TMC2209's ceiling, which is a known and accepted trade in this project.
+
+#### Why the TVS goes behind the FET
+
+Ahead of it, a reversed supply forward-biases the TVS into a dead short and blows F1 every time someone miswires. Behind the FET, reverse voltage never reaches it - and it still clamps motor transients, which originate on the load side anyway.
+
+A 100 nF from gate to source slows turn-on into a controlled ramp if inrush into the bulk capacitor is tripping the fuse. Optional.
+
 ### I/O and safety
 
 | Item | Qty | Notes |
@@ -379,7 +507,8 @@ Put it on a header rather than soldering it down - it lets you change your mind 
 | 0.96" OLED SSD1306, 128x64 | I2C | 4-pin | ~$3 | Workable, but 8 lines of ~21 chars is tight for five pumps plus ratios |
 | 1.3" OLED SH1106, 128x64 | I2C | 4-pin | ~$5 | Same pixels, easier to read across a bench |
 | 2.42" OLED SSD1309, 128x64 | I2C | 4-pin | ~$12 | Same layout code, genuinely readable at arm's length |
-| **2.4" TFT ILI9341, 240x320** | SPI | 8-pin | ~$8 | **Best fit.** Room for all five pumps, colour-codes state, still cheap |
+| **2.4" TFT ILI9341, 240x320** | SPI | 9-pin | ~$8 | **Best fit.** Room for all five pumps, colour-codes state, still cheap |
+| 1.54" IPS ST7789, 240x240 | SPI | 8-pin | ~$6 | Same code path, but ~2 mm text - readable up close, not across a bench |
 | 20x4 character LCD | I2C | 4-pin | ~$8 | Very readable, but no graphics and an awkward aspect for this data |
 
 For a bench instrument you glance at while doing something else, **the 2.4" colour TFT is the right call.** Five pump rows with names, uL/min, percentage and syringe volume is about 20 lines of text - which a 128x64 OLED can only show by paging, and paging is exactly what you do not want when checking a running experiment at a glance.
@@ -389,7 +518,7 @@ Fit **both headers** on the board. An I2C display header costs four pins that ar
 | Header | Pins | Availability |
 |---|---|---|
 | I2C display | 3.3 V, GND, SDA, SCL (4.7k pullups on board) | Both N16 and N16R8 |
-| SPI display | 3.3 V, GND, SCK, MOSI, CS, DC, BL. RST ties to the board reset net | **N16 only** - sits on GPIO35-37 |
+| SPI display | 9-pin, in the ILI9341 module's own order: VCC, GND, CS, RESET, DC, SDI, SCK, LED, SDO. RESET gets its own RC, SDO is a No-Connect | **N16 only** - sits on GPIO35-37 |
 
 Drive both at **3.3 V logic**. Most OLED modules are fine; check any ILI9341 module, as some carry 5 V level shifters and some do not.
 
@@ -434,8 +563,7 @@ Seven module GPIOs go unused by this design. They do not all get the same treatm
 |---|---|
 | **GPIO0** | **Not a No-Connect.** 10k pullup to 3V3 plus a button to GND - it is the boot strap, and NC-ing it means no download mode |
 | GPIO3 | No-Connect. JTAG source select; floating is fine |
-| GPIO45 | No-Connect. VDD_SPI select, internal pulldown holds it LOW, which is what a 3.3 V flash needs |
-| GPIO46 | No-Connect. Boot strap, internal pulldown holds it LOW |
+| GPIO43, 44 | **Not a No-Connect.** UART0 TX/RX, brought to the J-DBG header. Left unpopulated, but the pads are the serial recovery path if native USB ever fails |
 | GPIO35, 36, 37 | See below - this is a decision, not a default |
 
 KiCad's No-Connect flag is an ERC annotation, not a physical statement. It creates no copper and no net; it only suppresses the "pin not connected" warning so real omissions still surface.
@@ -466,7 +594,9 @@ The series-jumper approach is the recommended one: three cheap parts turn the mo
 
 **GPIO19 and GPIO20 are native USB D- and D+.** Reserve them; that is what deletes the USB-serial chip.
 
-**Strapping pins: GPIO0, GPIO3, GPIO45, GPIO46.** Anything pulled the wrong way at reset stops the board booting. Keep them off driver ENABLE, which is precisely the kind of net that sits at a defined level at power-up. GPIO45 is VDD_SPI and GPIO46 is input-only at boot - treat both as awkward and use them last.
+**Strapping pins: GPIO0, GPIO3, GPIO45, GPIO46.** Anything pulled the wrong way at reset stops the board booting. Keep them off driver ENABLE, which is precisely the kind of net that sits at a defined level at power-up.
+
+GPIO45 and GPIO46 carry the status LEDs, which is the one load that suits a strapping pin: anode-driven through 1k to ground, so the pin is hi-Z at reset and the internal pulldown puts both straps in the state they already need - 45 low for a 3.3 V VDD_SPI flash, 46 low for ROM message printing. An LED cannot pull either pin high. See `hardware/CONNECTIONS.md` for the full argument.
 
 **No input-only pins.** Unlike classic ESP32's GPIO34-39, every S3 GPIO is bidirectional. This is a real simplification for endstop and LED placement.
 
