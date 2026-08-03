@@ -1,7 +1,7 @@
 # Schematic open issues
 
 Worklist against `ufluidics.kicad_sch` as of **2026-08-02**, from `kicad-cli sch erc` plus a netlist review.
-State at that point: **8 ERC violations**, and several problems ERC cannot see.
+State at that point: **0 ERC violations**, and several problems ERC cannot see.
 
 Reproduce both checks with:
 
@@ -13,102 +13,44 @@ kicad-cli sch export netlist --format kicadsexpr --output /tmp/net.net ufluidics
 
 ERC catches dangling and unconnected pins.
 It does not catch a net that is wired to the wrong pin, so the netlist review is the one that found the VSW and USB faults.
+A clean ERC run therefore closes out the first category and says nothing about the second - everything below survived a clean run.
+
+**No E-stop is a deliberate choice on this board.**
+`DRIVER_EN` runs straight from U1 pad 9 (GPIO16) to all five driver EN pins, GPIO14 carries a no-connect flag, and there is no J-ESTOP connector.
+Do not re-file this as a defect.
+The consequence is that stopping depends on firmware, which raises the value of two things that are not the E-stop: R12 holding the drivers disabled from reset, and `DRV_STATUS` readback over the driver UART. Both are present and working.
 
 ---
 
 ## Blocking
 
-### 1. No E-stop anywhere
+### No open blocking items
 
-`DRIVER_EN` runs straight from U1 pad 9 (GPIO16) to all five driver EN pins.
-`ESTOP_SENSE` has exactly one node - U1 pad 22 - and goes nowhere; ERC reports pad 22 as `pin_not_connected`.
-There is no J-ESTOP connector in the design.
+The driver socket wiring was the last one, and it is resolved: **the pin locations are correct as routed.** Pin 4 carries the single-wire PDN_UART, pin 5 is the alternate PDN pad and correctly No-Connect, pin 6 is CLK tied to GND, and the power row runs GND on pin 1 with VIO on pin 2. `CONNECTIONS.md` now carries the full as-wired table under "As-wired socket pinout - verified, do not re-derive"; read that instead of re-deriving it from the generic StepStick order, which is what produced two wrong findings during review.
 
-Fix: add a 4-pin J-ESTOP, put the NC contact in series between GPIO16 and the driver EN net, and **add a 10k pull-up from the driver side of that contact to +3V3**.
-
-```
-  GPIO16 ----[ J-ESTOP pins 1-2, NC ]----+---- DRV_EN -> 5x driver EN
-                                         |
-                                     [10k] to +3V3
-```
-
-The pull-up is the part that matters. TMC2209 EN is active LOW, so a bare series break leaves EN floating and the drivers may stay live.
-Aux contact to pin 3 -> GPIO14, GND on pin 4.
-
-The RUN switch does not cover this. It is a firmware-polled input, so it fails in exactly the scenario the E-stop exists for.
-
-### 2. The input TVS is on the gate node, not on the rail
-
-D6 (SMBJ26A) connects GND to `Q1_GATE` - in parallel with R11 - instead of GND to `+24V`. The `+24V` net contains C9, Cin/Cin1/Cin2/Cinx, the five VMOT pins, Q1 source and U5 pin 7, and no TVS.
-
-The rail therefore has no transient protection, and nothing about that is visible on the bench: the gate sits about 12 V below the rail, far under the part's 26 V standoff, so it never conducts and every measurement looks correct. Meanwhile motor back-EMF reaches U5 and the drivers unclamped.
-
-Fix: move D6's non-ground end from `Q1_GATE` to `+24V`.
-
-**The symbol needs attention too, and it is not the mistake it first looks like.** D6 uses `Diode:SM6T33A`, and KiCad's whole SM6T family inherits from `SM6T6V8A`, whose pins are named `A1` and `A2` - anode/anode - even though the parts are unidirectional and the symbol description says so. The netlist therefore exports no cathode at all.
-
-That has a concrete consequence rather than a cosmetic one. `Diode_SMD:D_SMB` puts the band, and therefore the cathode, on **pad 1**. D6 pin 1 currently sits on GND. Move only pin 2 to `+24V` and the physical part is fitted cathode-to-ground - a forward diode across the supply that opens F1 on first power-up.
-
-So the correct wiring is **pin 1 to `+24V`, pin 2 to GND**. Confirm pad 1 is the banded end in the footprint editor first; everything downstream rests on it.
-
-**Separately, the symbol and value disagree about which part this is.**
-
-| Field | Says |
-|---|---|
-| Value | SMBJ26A |
-| Symbol | `Diode:SM6T33A` |
-| Description | 600W unidirectional Transil, **33 Vrwm** |
-| Datasheet | `st.com/.../sm6t.pdf` |
-
-A BOM built from Value gets the right part. Anyone reading the description or following the datasheet link orders an SM6T33A, which clamps near **45.7 V** - above the LM2675's 45 V absolute maximum, and precisely the selection SMBJ26A exists to avoid. Correct the Description and Datasheet fields, or derive a symbol with real `K`/`A` pins and retire the ambiguity for good.
-
-Everything else in the protection block is correct and verified against the netlist: J18 pin 2 broken off `+24V` and routed through F1, F1 into Q1's **drain**, Q1 **source** to `+24V`, R11 100k gate to GND, D7 (BZV55C15) cathode to `+24V` and anode to the gate, C9 470 uF on the rail. Q1 is a SUD50P06-15 at -60 V and F1 is 2 A.
+Register readback therefore works. `test_connection()`, `DRV_STATUS`, CRC checking and StallGuard are all available over the existing bus, with no added parts. Do **not** fit an external 1k between pins 4 and 5 - the module already has one, and a second in series makes 2k.
 
 ---
 
 ## Important
 
-### 3. No per-driver VMOT decoupling
+### 1. Most parts have no footprint
 
-Input bulk is now covered by C9 at 470 uF, which also settles the `Cin` question - 3x 4.7 uF at U5's input is correct *local* decoupling once the bulk sits upstream.
+**60 of 84 components.** Blocks layout, not review. Footprints that are set and worth keeping: D1 `D_SMA`, D2 `D_SMA`, D7 `D_MiniMELF`, D8 `PCM_JLCPCB:D_SMB`, Q1 `TO-252-2`, U3 `SOT-223-3_TabPin2`, U5 `SOIC-8`, F1 5x20 mm holder.
 
-What is still missing is **100 uF electrolytic + 100 nF at each of the five driver sockets**, on `+24V` at the socket rather than at the input. That placement is the whole point: the socket's own inductance is what makes a distant bulk capacitor useless to the driver, and local absorption is also the practical mitigation for the TMC2209's 30 V absolute maximum, which no input TVS can protect (see `HARDWARE.md`).
+### 2. C9 is an electrolytic on an unpolarized symbol
 
-### 4. Driver socket pin 5 floats on all five sockets
+`C9`, 470 uF on `+24V`, still uses `Device:C`. That symbol draws no polarity marking and lets a footprint be chosen with no anode. `Cout1`/`Cout2` had the same problem and are fixed; C9 was left alone because it was outside the reported scope.
 
-`unconnected-(J1-Pin_5-Pad5)`, and the same for J4, J7, J10, J13.
+470 uF on a 24 V rail is an aluminium electrolytic, and fitted backwards it vents. Move it to `Device:C_Polarized` with a `CP_*` footprint, and confirm pin 1 lands on `+24V` rather than GND after the swap - that is the step that bit `Cout1`/`Cout2`.
 
-Identify what pin 5 is on the module you actually chose - vendor pin order differs between Watterott, BigTreeTech and FYSETC. If it is **CLK or SPREAD, it must go to GND**: a floating clock input next to a 24 V chopper picks up switching noise and upsets the chopper.
+`C20` (1 uF at the LDO input) is fine as `Device:C`. At that value it is a ceramic, and unpolarized is correct.
 
-### 5. I2C pullup values are unset
+### 3. Annotation errors on export
 
-R9 and R10 both carry the literal value `R`. Set both to **4.7k**.
+`kicad-cli` still warns on every export: `schematic has annotation errors`. The non-numeric refdes are `J_ENDSTOP_IN1`, `J_ENDSTOP_IN2`, `J_ENDSTOP_OUT1`-`OUT3`, `J_LED_RUN1`, `J_LED_FAULT1`, `J_LED_PWR1`, `J_RUN_SWITCH` and `J_DEBUG_UART`. KiCad treats each as unannotated.
 
-### 6. J19 pin order is reversed against the documentation
-
-Schematic has pin 3 = SCL, pin 4 = SDA. `CONNECTIONS.md` specifies pin 3 = SDA, pin 4 = SCL.
-Either is workable, but the cable is built from one of them - pick one and make both agree.
-
-### 7. Stray `POT_B` label
-
-ERC: `label_dangling` at (0.159 mm, 2.096 mm) - near the sheet origin, so it is a dropped stray, not a real connection.
-The `/POT_B` net itself is correct (C5, J17 pin 2, U1 pad 38). Delete the orphan label.
-
----
-
-## Hygiene
-
-Nothing here breaks the board, but each one hides a real fault the next time ERC runs.
-
-| Item | Detail |
-|---|---|
-| No-connect flags | U1 pad 15 (IO3), pad 36 (RXD0), pad 37 (TXD0); U5 pads 2 and 3 (NC) and pad 5 (ON/OFF). Floating ON/OFF is correct - the pin sources its own bias - but flag it so it reads as intent |
-| PWR_FLAG missing | Three `power_pin_not_driven` errors: `#PWR01`, `#PWR030`, `#PWR04` |
-| Annotation errors | `kicad-cli` warns on export. The `J_LED_*` and `J_ENDSTOP_*` refdes are non-numeric, which KiCad treats as unannotated |
-| `J_ENDSTOP_OUT4` is the RUN switch | Wired to GPIO13. Rename to `J_RUN` before someone plugs an endstop into it |
-| Footprints | Most parts have none. Blocks layout, not review |
-| J-DBG header | UART0 pads 36/37 have no header. Specified in `CONNECTIONS.md`; the recovery path if native USB ever fails |
-| LDO input cap | No local 1 uF at U3 VI. `Cout`/`Cout1` are doing the job from the buck side; a local part is still wanted |
+Renaming them to plain numbered refdes is the fix; the descriptive names belong in the symbol's Description or a sheet note, not the reference field.
 
 ---
 
@@ -116,9 +58,9 @@ Nothing here breaks the board, but each one hides a real fault the next time ERC
 
 Things the netlist cannot tell apart, worth checking against the parts you actually order.
 
-- **`Cout` / `Cout1` dielectric.** 2x 68 uF is right, but the LM2675 is voltage-mode and compensated around output-capacitor ESR. Every capacitor in the datasheet's selection tables is a solid tantalum. If these are X5R/X7R ceramics the loop can ring or oscillate - use tantalum or polymer, or add series resistance.
 - **L1 is 47 uH; the 5 V nomograph at 24 V in gives 68 uH.** 47 uH is defensible, but confirm Isat clears the 2.2 A max current limit rather than the load current.
-- **Panel LED headers share a resistor with the on-board LED.** `J_LED_RUN` sits in parallel with D3 across R4, and likewise for FAULT and PWR. Two LEDs on one resistor split current by forward voltage, so the lower-Vf part takes most of it and the other looks dim. Give the panel header its own resistor, or accept that only one of the pair is the real indicator.
+- **D1 (SS34) ORs USB VBUS onto `+5V`** with the buck output, cathode on `+5V`, anode on the VBUS net. Nothing limits how much the host supplies, and nothing prevents both sources being live at once. Confirm the buck tolerates back-feed at 5 V minus a Schottky drop, and that a USB host alone cannot brown out the +3V3 rail under motor load.
+- **Panel LED headers share a resistor with the on-board LED.** `J_LED_RUN1` sits in parallel with D3 across R4, and likewise for FAULT and PWR. Two LEDs on one resistor split current by forward voltage, so the lower-Vf part takes most of it and the other looks dim. Give the panel header its own resistor, or accept that only one of the pair is the real indicator.
 - **Endstop connectors are 2-pin here, 3-pin in the docs.** 2-pin is correct with firmware pullups and NC switches - fix `CONNECTIONS.md`, not the schematic.
 - **Motor coil polarity.** Pairing is correct on all five, so no damage risk. One coil's polarity is inverted relative to the documented J-Mx order, which shows up as a reversed direction, not a fault.
 
@@ -130,14 +72,26 @@ Recorded so the next review does not re-flag them.
 
 | Was | Now |
 |---|---|
-| No input protection at all | F1, Q1, R11, D7 and C9 all present and correctly wired. Only D6's placement is outstanding, see above |
+| `Cout1`/`Cout2` dielectric unspecified | Both are now `Device:C_Polarized`, footprint `Capacitor_Tantalum_SMD:CP_EIA-7343-31_Kemet-D`, with `Dielectric`, `Voltage`, `ESR` and `MPN` fields carrying the constraint into the BOM. Pin 1 (+) sits on `+5V`, pin 2 on GND - verified in the netlist after the symbol swap. **`MPN` is still `TBD`** - fill it from a distributor page once you have confirmed the part's ESR |
+| No input protection at all | F1, Q1, R11 100k, D7 (BZV55C15, cathode on `+24V`) and C9 470 uF all present and correctly wired |
+| Input TVS on the gate node, wrong part, ambiguous symbol | D6 retired. **D8** replaces it: `TVS-Uni,SMBJ26A` from the JLCPCB library, footprint `PCM_JLCPCB:D_SMB`, pin 1 on `+24V` and pin 2 on `GND`. Value, symbol and description now agree - 26 V standoff, 42.1 V clamp, under the LM2675's 45 V absmax. Worth one look in the footprint editor that pad 1 is the banded end, since the symbol pins are unnamed |
+| `DRIVER_EN` floating from reset | R12, 10k from `DRIVER_EN` to `+3V3`. Drivers are disabled until firmware pulls GPIO16 low |
+| No local input cap at the LDO | C20, 1 uF on `+5V` at U3 VI |
+| No J-DBG header | `J_DEBUG_UART`, 3-pin: `/DEBUG_RX` (U1 pad 36), `/DEBUG_TX` (pad 37), GND |
+| `J_ENDSTOP_OUT4` was really the RUN switch | Renamed `J_RUN_SWITCH`, on `/RUN_SWITCH` to GPIO13 |
+| `single_global_label` disabled | Back on. Only `footprint_filter`, `four_way_junction` and `simulation_model_issue` remain ignored, all harmless. `erc_exclusions` is empty |
 | 24 V bulk at ~14 uF | C9 470 uF at the input |
+| No per-driver VMOT decoupling | C10-C19, ten parts on `+24V`, one pair per driver socket |
+| Three `power_pin_not_driven` errors | PWR_FLAGs added in `power.kicad_sch`. `+3V3` is additionally driven by U3 pin 3 (`power_out`) |
+| I2C pullups unset | R9 and R10 both 4.7k |
+| J19 pin order reversed against the docs | Pin 3 = SDA, pin 4 = SCL, matching `CONNECTIONS.md` |
+| Stray `POT_B` label | Deleted |
+| Stray `ESTOP_SENSE` label | Deleted; GPIO14 (pad 22) now carries a no-connect flag |
+| Missing no-connect flags | U1 pads 15, 22, 36, 37; U5 pads 2, 3 and 5; J20 pad 9; J21 SBU1/SBU2. Floating ON/OFF on U5 is correct - the pin sources its own bias - and now reads as intent |
 | Off-grid endpoints around J17 | Cleared |
-| Stray `ESTOP_SENSE` label | Deleted. GPIO14 now reports as `pin_not_connected`, which is expected until J-ESTOP exists |
-| U5 pad 8 (VSW) unconnected, FB wired to the switch node | VSW joins C1/D2/L1; FB on +5V |
+| U5 pad 8 (VSW) unconnected, FB wired to the switch node | VSW joins C1/D2/L1; FB on `+5V` |
 | USB D+/D- crossed at the MCU | `USB_DP` and `USB_DN` both straight through |
 | No capacitance at all on +3V3 | C6 22 uF, C7 100 nF, C8 1 uF on the LDO output |
 | EN cap 100 nF | C2 = 1 uF |
 | No pot wiper filtering | C4, C5 at 100 nF |
-| No I2C pullups | R9, R10 present - values still unset, see above |
 | `USB_C_Plug` symbol, single 5.1k | `USB_C_Receptacle_USB2.0_16P`, R1 and R8 as separate Rd on CC1 and CC2 |

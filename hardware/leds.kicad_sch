@@ -1131,7 +1131,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "LED_SMD:LED_2512_6332Metric"
 			(at 53.34 74.93 0)
 			(hide yes)
 			(show_name no)
@@ -1302,7 +1302,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
 			(at 55.88 60.96 0)
 			(hide yes)
 			(show_name no)
@@ -1382,7 +1382,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "PCM_JLCPCB:R_0603"
 			(at 44.45 76.708 90)
 			(hide yes)
 			(show_name no)
@@ -1540,7 +1540,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "PCM_JLCPCB:R_0603"
 			(at 44.45 48.768 90)
 			(hide yes)
 			(show_name no)
@@ -1620,7 +1620,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "PCM_JLCPCB:R_0603"
 			(at 44.45 107.188 90)
 			(hide yes)
 			(show_name no)
@@ -1702,7 +1702,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
 			(at 55.88 33.02 0)
 			(hide yes)
 			(show_name no)
@@ -1782,7 +1782,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "LED_SMD:LED_2512_6332Metric"
 			(at 53.34 46.99 0)
 			(hide yes)
 			(show_name no)
@@ -1873,7 +1873,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "LED_SMD:LED_2512_6332Metric"
 			(at 53.34 105.41 0)
 			(hide yes)
 			(show_name no)
@@ -1966,7 +1966,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_JST:JST_PH_B2B-PH-K_1x02_P2.00mm_Vertical"
 			(at 55.88 86.36 0)
 			(hide yes)
 			(show_name no)

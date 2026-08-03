@@ -150,6 +150,38 @@ Footprint: the standard 2x8 0.1 in StepStick outline, `Module:Pololu_Breakout-16
 
 **Pin order differs between Watterott, BigTreeTech and FYSETC** even though all three claim the A4988 footprint. Once you socket them, the board is committed to whichever pinout you route - pick the exact part first and wire by signal name against its datasheet.
 
+##### As-wired socket pinout - verified, do not re-derive
+
+This is what the schematic routes, checked against the module and confirmed correct. Both rows are `Connector_Generic:Conn_01x08`. Reviewers have twice tried to re-derive this from the generic StepStick order and reached the wrong answer; the table below is the authority.
+
+| Pin | Logic row (J1, J4, J7, J10, J13) | Power row (J2, J5, J8, J11, J14) |
+|---|---|---|
+| 1 | EN -> `DRIVER_EN` | GND |
+| 2 | MS1 -> strapped, see address table | VIO -> **+3V3** |
+| 3 | MS2 -> strapped, see address table | 1B |
+| 4 | PDN_UART -> `TMC_UART_A` / `TMC_UART_B` | 1A |
+| 5 | Alternate PDN pad - **No-Connect** | 2A |
+| 6 | CLK -> GND | 2B |
+| 7 | STEP | GND |
+| 8 | DIR | VMOT -> **+24V** |
+
+Two points that look like mistakes and are not:
+
+- **Power row pin 1 is GND and pin 2 is VIO**, not the other way round. The generic StepStick order puts VDD on the end pin; this module does not.
+- **Logic row pin 5 is No-Connect.** See the PDN section above - it is the alternate position for the same single-wire line, not a second UART pin.
+
+UART addresses, set by the MS1/MS2 straps:
+
+| Socket | Bus | MS1 (pin 2) | MS2 (pin 3) | Address |
+|---|---|---|---|---|
+| J1 | `TMC_UART_A` -> GPIO17 | GND | GND | 0 |
+| J4 | `TMC_UART_A` | +3V3 | GND | 1 |
+| J7 | `TMC_UART_A` | GND | +3V3 | 2 |
+| J10 | `TMC_UART_A` | +3V3 | +3V3 | 3 |
+| J13 | `TMC_UART_B` -> GPIO18 | GND | GND | 0 |
+
+Four addresses is the TMC2209's limit per bus, which is why the fifth driver gets its own pin.
+
 ##### Two PDN pads (BigTreeTech TMC2209 V1.2/V1.3)
 
 The two pads are **not** TX and RX. They are two alternative positions for the same single-wire PDN_UART line, and an on-board 1k resistor selects which one is live.
