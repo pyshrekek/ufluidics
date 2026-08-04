@@ -4105,6 +4105,18 @@
 		(uuid "6e86d15c-0132-4dc0-8a39-867864f2bdc1")
 	)
 	(rectangle
+		(start 25.4 178.435)
+		(end 71.12 194.945)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(fill
+			(type none)
+		)
+		(uuid "91239c86-465c-499c-8f5e-f8d8e00a04f8")
+	)
+	(rectangle
 		(start 25.4 17.78)
 		(end 71.12 52.705)
 		(stroke
@@ -4259,6 +4271,17 @@
 		)
 		(uuid "99b2d817-d02d-459f-bf39-4516bdc6f6cd")
 	)
+	(text "Extra Pins"
+		(exclude_from_sim no)
+		(at 26.416 193.294 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "a7bca7cb-3541-4302-a58d-3550fa09f4cd")
+	)
 	(text "Switch, enables and disables stepper drivers. \nDoes not cut power to MCU"
 		(exclude_from_sim no)
 		(at 197.612 155.702 0)
@@ -4349,14 +4372,6 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "f5d23026-274f-4405-b5d2-18e60170b782")
-	)
-	(no_connect
-		(at 93.98 72.39)
-		(uuid "19a7f99b-b697-483d-8462-b67229e2a277")
-	)
-	(no_connect
-		(at 93.98 44.45)
-		(uuid "8d3699f7-7360-4e85-ad2d-fafcbdb85d3a")
 	)
 	(no_connect
 		(at 222.25 52.07)
@@ -4712,6 +4727,26 @@
 		)
 		(uuid "0152c27c-0fd7-4dbd-8ee9-310b7ee64704")
 	)
+	(label "LED_RUN"
+		(at 93.98 44.45 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "01ccda4d-b6a4-4e9f-99da-bb1588b710a1")
+	)
+	(label "GPIO14"
+		(at 46.99 185.42 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "0a3d7f7e-de25-4d32-8532-2c2e58e78c88")
+	)
 	(label "USB_D_P"
 		(at 265.43 52.07 0)
 		(effects
@@ -4721,16 +4756,6 @@
 			(justify left bottom)
 		)
 		(uuid "0af11bcd-3fd6-4284-ae12-a45f85f0cf43")
-	)
-	(label "LED_RUN"
-		(at 124.46 69.85 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "0f391fdb-aaa5-484a-9257-d698ef0ad6fe")
 	)
 	(label "IN2_STEP"
 		(at 124.46 59.69 0)
@@ -4912,6 +4937,16 @@
 		)
 		(uuid "53ae6239-1437-4234-8d45-5eafb85ccfd3")
 	)
+	(label "GPIO14"
+		(at 93.98 72.39 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "596f15a7-e9b8-4403-80c9-f7ce897860c4")
+	)
 	(label "BOOT"
 		(at 93.98 36.83 180)
 		(effects
@@ -4992,15 +5027,15 @@
 		)
 		(uuid "85a28076-0b7e-456e-b261-e4e8fd368ac0")
 	)
-	(label "POT_A"
-		(at 93.98 39.37 180)
+	(label "GPIO45"
+		(at 46.99 187.96 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right bottom)
 		)
-		(uuid "8db90767-83d8-4704-82dd-898ed914033b")
+		(uuid "8e7d62e2-bb72-4057-b7ef-51137b704f72")
 	)
 	(label "IN1_ENDSTOP"
 		(at 265.43 21.59 0)
@@ -5101,6 +5136,16 @@
 			(justify left bottom)
 		)
 		(uuid "9ccfdd39-195d-4b26-a994-e71b076d6bff")
+	)
+	(label "GPIO45"
+		(at 124.46 69.85 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "a5e61b38-14ab-4070-944b-18fcd270dd91")
 	)
 	(label "USB_D_P"
 		(at 124.46 44.45 0)
@@ -5252,6 +5297,16 @@
 		)
 		(uuid "cd968a95-c017-4655-a6d1-ff298aea2b5a")
 	)
+	(label "POT_B"
+		(at 93.98 39.37 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "d12b8b68-255b-426f-afbd-256dc79cf9f8")
+	)
 	(label "TMC_UART_A"
 		(at 166.37 85.09 180)
 		(effects
@@ -5271,16 +5326,6 @@
 			(justify right bottom)
 		)
 		(uuid "d40850e5-8400-42bf-af83-e29c830ec184")
-	)
-	(label "POT_B"
-		(at 93.98 41.91 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "d5f9ab57-697c-4bb6-acd1-5599f836c242")
 	)
 	(label "IN1_ENDSTOP"
 		(at 93.98 57.15 180)
@@ -5331,6 +5376,16 @@
 			(justify left bottom)
 		)
 		(uuid "e5e35e45-2736-47cf-b421-cae640b59bed")
+	)
+	(label "POT_A"
+		(at 93.98 41.91 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "e67d4df1-6ae1-40b9-8d57-569e8d1c124e")
 	)
 	(label "IN2_DIR"
 		(at 93.98 49.53 180)
@@ -9355,6 +9410,88 @@
 			(project "ufluidics"
 				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0"
 					(reference "R8")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x02")
+		(at 52.07 185.42 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "940a42ca-0cee-4c41-a613-d5e933139682")
+		(property "Reference" "J21"
+			(at 54.61 185.4199 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "Conn_01x02"
+			(at 54.61 187.9599 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
+			(at 52.07 185.42 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 52.07 185.42 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x02, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 52.07 185.42 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "4ddf5c16-ed33-4dca-982b-252ed992568f")
+		)
+		(pin "2"
+			(uuid "fc0e0c5a-125a-415d-8501-e4464759f9ae")
+		)
+		(instances
+			(project "ufluidics"
+				(path "/bf8ba2d7-3b7b-4865-bab6-5f38b618ecb0"
+					(reference "J21")
 					(unit 1)
 				)
 			)

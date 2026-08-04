@@ -44,7 +44,7 @@ Reference designators used below:
 | 12 | GPIO8 | ENDSTOP IN1 | J-ES1 pin 2 | in, pullup |
 | 13 | GPIO19 | USB_D- | USB-C D- (CC 5k1 each) | bidir |
 | 14 | GPIO20 | USB_D+ | USB-C D+ | bidir |
-| 15 | GPIO3 | unused | No-Connect | - |
+| 15 | GPIO3 | LED_RUN | D-RUN anode, 1k | out |
 | 16 | GPIO46 | LED_FAULT | D-FAULT anode, 1k | out |
 | 17 | GPIO9 | ENDSTOP IN2 | J-ES2 pin 2 | in, pullup |
 | 18 | GPIO10 | ENDSTOP OUT1 | J-ES3 pin 2 | in, pullup |
@@ -55,7 +55,7 @@ Reference designators used below:
 | 23 | GPIO21 | I2C_SCL | J-DISP pin 4, 4k7 to 3V3 | bidir |
 | 24 | GPIO47 | I2C_SDA | J-DISP pin 3, 4k7 to 3V3 | bidir |
 | 25 | GPIO48 | TFT_DC | J-TFT pin 6 | out |
-| 26 | GPIO45 | LED_RUN | D-RUN anode, 1k | out |
+| 26 | GPIO45 | unused | No-Connect | - |
 | 27 | GPIO0 | BOOT strap | 10k to 3V3 + SW-BOOT to GND | in |
 | 28 | GPIO35 | TFT_SCK  (N16 only) | J-TFT pin 3, via 0R jumper | out |
 | 29 | GPIO36 | TFT_MOSI (N16 only) | J-TFT pin 4, via 0R jumper | out |
@@ -79,14 +79,14 @@ Unlisted pads (GPIO22-34) do not exist on this module - the numbering jumps from
 All three are wired the same way: **anode toward the source, cathode to ground.**
 
 ```
-  GPIO45 --[R 1k]--|>|-- GND      D-RUN, green
+  GPIO3  --[R 1k]--|>|-- GND      D-RUN, green
   GPIO46 --[R 1k]--|>|-- GND      D-FAULT, red
   +3V3   --[R 2k2]--|>|-- GND     D-PWR, green - always on, no GPIO
 ```
 
 | Ref | Net | Series R | Current | Meaning |
 |---|---|---|---|---|
-| D-RUN | GPIO45 | 1k | ~1.2 mA | Solid = pumping |
+| D-RUN | GPIO3 | 1k | ~1.2 mA | Solid = pumping |
 | D-FAULT | GPIO46 | 1k | ~1.4 mA | Blinking = fault |
 | D-PWR | +3V3 | 2k2 | ~0.6 mA | Rail is up |
 
@@ -94,15 +94,19 @@ At 3.3 V with a green Vf of about 2.1 V, 1k gives (3.3 - 2.1) / 1000 = 1.2 mA; a
 
 Put D-PWR on **+3V3**, not on +5V or +24V. A 3.3 V indicator proves the buck *and* the LDO are both alive, which is the question you actually have when a board does nothing.
 
-**Do not wire these active-low.** The tempting alternative - 3V3 through the resistor to the LED, GPIO sinking to turn it on - would work on an ordinary pin and is wrong here: it holds GPIO45 and GPIO46 *high* through the resistor while the pin is hi-Z at reset. That is a mis-strapped VDD_SPI and a mis-strapped boot mode, on every power-up. The anode-to-GPIO topology is what makes these two pins usable at all.
+**Do not wire these active-low.** The tempting alternative - 3V3 through the resistor to the LED, GPIO sinking to turn it on - would work on an ordinary pin and is wrong here: it holds GPIO3 and GPIO46 *high* through the resistor while the pin is hi-Z at reset. That is a mis-strapped JTAG source select and a mis-strapped boot log setting, on every power-up. The anode-to-GPIO topology is what makes these two pins usable at all.
 
 Firmware matches: `digitalWrite(LED_RUN_PIN, HIGH)` lights it.
 
 ### Why the status LEDs sit on strapping pins
 
-The indicator LEDs are on **GPIO45 and GPIO46**, both strapping pins, rather than on the UART0 pair. That is deliberate in both directions.
+The indicator LEDs are on **GPIO3 and GPIO46**, both strapping pins, rather than on the UART0 pair. That is deliberate in both directions.
 
-Putting the LEDs on strapping pins is safe because of how they are driven. Each LED is anode-driven through a 1k series resistor to ground, so the MCU pin sources current when the LED is lit and is high-impedance during reset. Both pins have an internal pulldown enabled at reset, so at strap-sample time they read 0 - which is the state both need anyway: GPIO45 low selects a 3.3 V VDD_SPI flash, GPIO46 low leaves ROM message printing enabled. An LED cannot pull either pin high, because its cathode is at ground. Firmware drives them long after the straps are latched, and any reset re-tristates the pin before the next sample.
+Putting the LEDs on strapping pins is safe because of how they are driven. Each LED is anode-driven through a 1k series resistor to ground, so the MCU pin sources current when the LED is lit and is high-impedance during reset. An LED wired this way can never pull its pin high, because its cathode is at ground - the worst it can do is offer a weak path to GND, which is the low state every strap here wants anyway. Firmware drives them long after the straps are latched, and any reset re-tristates the pin before the next sample.
+
+GPIO46 has a documented internal pulldown at reset, so it reads 0 regardless - low leaves ROM message printing enabled. GPIO3 selects JTAG signal source (0 = USB-JTAG, 1 = external JTAG pins); Espressif does not document an internal pulldown on this pin the way it does for 45/46, so the LED's resistor-to-GND path is doing more of the work. It should still sample low - 0, USB-JTAG, the default this board wants since debugging goes over native USB - but **this was moved here for routing convenience and has not been bench-verified.** Check it with a meter or scope on first power-up. If it ever sampled high, the consequence is USB-JTAG being deselected in favor of external JTAG pins this board does not expose - inconvenient, not boot-breaking.
+
+GPIO45 (the original home of LED_RUN, VDD_SPI strap) is unpopulated now - No-Connect, per the pin table.
 
 Keeping the LEDs *off* GPIO43/44 buys two things:
 

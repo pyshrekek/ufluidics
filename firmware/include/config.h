@@ -135,8 +135,8 @@
 // GPIO22-34 on the package at all; the pad numbering jumps from IO21 to IO35.
 // Check any pin against that before assigning it.
 //
-// Reserved: GPIO19/20 (native USB D-/D+), GPIO0/3 (strapping), GPIO43/44
-// (UART0, kept free as a serial recovery port). GPIO45/46 are strapping pins
+// Reserved: GPIO19/20 (native USB D-/D+), GPIO0 (strapping), GPIO43/44
+// (UART0, kept free as a serial recovery port). GPIO3/45/46 are strapping pins
 // but carry the indicator LEDs - see the LED_*_PIN note below for why that is
 // safe. That leaves 30 comfortable pins on N16.
 //
@@ -145,9 +145,9 @@
 // SPI0/1 data lines, and a map that used them would fail on the wrong part
 // with no symptom beyond pumps that never move.
 //
-// Budget: 26 pins used. 6 spare on N16 (35, 36, 37, 43, 44, 48), 3 on R8
-// (43, 44, 48). GPIO43/44 are spare by choice, not by accident - they are the
-// UART0 pair and are worth more as a recovery port than as two more IO.
+// Budget: 26 pins used. 7 spare on N16 (35, 36, 37, 43, 44, 45, 48), 4 on R8
+// (43, 44, 45, 48). GPIO43/44 are spare by choice, not by accident - they are
+// the UART0 pair and are worth more as a recovery port than as two more IO.
 // ---------------------------------------------------------------------------
 
 // STEP pins must stay contiguous and all above GPIO32, so the ISR sets and
@@ -164,20 +164,35 @@
 
 #define RUN_SWITCH_PIN  13             // maintained, closed to GND
 #define ESTOP_SENSE_PIN 14             // sense only; the cut is hardware
-// LEDs sit on the two strapping pins, which is safe here and deliberate.
+// LEDs sit on strapping pins, which is safe here and deliberate.
 //
 // Both are anode-driven through a series resistor to GND, so the pin sources
-// current when lit and is hi-Z during reset. GPIO45 and GPIO46 both have an
-// internal pulldown enabled at reset, so at strap-sample time they read 0 -
-// which is exactly the state both need: 45 low selects a 3.3 V VDD_SPI flash,
-// 46 low enables ROM message printing. An LED cannot pull them high because
-// its cathode is at ground. The firmware driving them high later is after the
-// straps are latched, and a reset re-tristates the pin before the next sample.
+// current when lit and is hi-Z during reset. An LED wired this way can never
+// pull its pin high, because its cathode is at ground - the worst it can do
+// is offer a weak path to GND, which is the low state every strap here wants
+// anyway. The firmware driving them high happens after the straps are
+// latched, and a reset re-tristates the pin before the next sample.
+//
+// GPIO46 has a documented internal pulldown at reset, so it reads 0 at
+// strap-sample time regardless of the LED - 0 enables ROM message printing.
+//
+// GPIO3 selects JTAG signal source (0 = USB-JTAG, 1 = external JTAG pins).
+// Espressif does not document an internal pulldown on this pin the way it
+// does for 45/46, so the LED's resistor-to-GND path is doing more of the
+// work here. It should still sample low (0, USB-JTAG - the default this
+// board wants anyway, since debugging goes over native USB), but this was
+// not bench-verified before layout. Confirm with a meter/scope on first
+// bring-up; if it ever sampled high, the only consequence is USB-JTAG being
+// deselected in favor of external JTAG pins this board does not expose -
+// inconvenient, not boot-breaking.
+//
+// GPIO45 (VDD_SPI strap) is free again after this move - nothing populates
+// it, so it costs nothing to leave unused.
 //
 // The alternative, GPIO43/44, is UART0. Those pins stay free so there is a
 // serial recovery port if native USB is ever unusable, and so the ROM boot log
 // does not flicker an indicator LED on every reset.
-#define LED_RUN_PIN     45             // VDD_SPI strap, pulled low at reset
+#define LED_RUN_PIN     3              // JTAG source strap, verify at bring-up
 #define LED_FAULT_PIN   46             // ROM-print strap, pulled low at reset
 
 #define I2C_SDA_PIN     47

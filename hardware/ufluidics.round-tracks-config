@@ -1,0 +1,9 @@
+Default	True	2.0	3
+Analog	True	2.0	3
+GND	True	2.0	3
+Motor	True	2.0	3
+Power24	True	2.0	3
+Power3V3	True	2.0	3
+Power5	True	2.0	3
+USB	True	2.0	3
+False	True	False
