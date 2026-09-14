@@ -1,4 +1,4 @@
-# ufluidics - zero-sum five-pump syringe controller
+# ufluidics
 
 Firmware for an Elegoo Mega 2560 R3 driving five NEMA17 syringe pumps on a microfluidic device.
 
